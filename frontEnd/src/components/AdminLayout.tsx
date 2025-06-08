@@ -1,0 +1,182 @@
+
+import React, { useState } from 'react';
+import { Layout, Menu, Avatar, Typography, Badge, Button, Dropdown } from 'antd';
+import {
+  UserOutlined,
+  TeamOutlined,
+  SettingOutlined,
+  BellOutlined,
+  BarChartOutlined,
+  FileTextOutlined,
+  DashboardOutlined,
+  UserAddOutlined,
+  SecurityScanOutlined,
+  NotificationOutlined,
+  LogoutOutlined
+} from '@ant-design/icons';
+import { usePermissions } from '../contexts/PermissionContext';
+
+const { Sider, Header, Content } = Layout;
+const { Title } = Typography;
+
+interface AdminLayoutProps {
+  children: React.ReactNode;
+  currentPage: string;
+  onMenuSelect: (key: string) => void;
+}
+
+const AdminLayout: React.FC<AdminLayoutProps> = ({ children, currentPage, onMenuSelect }) => {
+  const [collapsed, setCollapsed] = useState(false);
+  const { user, logout, hasPermission } = usePermissions();
+
+  const userMenu = (
+    <Menu>
+      <Menu.Item key="profile" icon={<UserOutlined />}>
+        Profile Settings
+      </Menu.Item>
+      <Menu.Divider />
+      <Menu.Item key="logout" icon={<LogoutOutlined />} onClick={logout}>
+        Logout
+      </Menu.Item>
+    </Menu>
+  );
+
+  const menuItems = [
+    {
+      key: 'dashboard',
+      icon: <DashboardOutlined />,
+      label: 'Dashboard',
+      hidden: !hasPermission('dashboard.view')
+    },
+    {
+      key: 'residents',
+      icon: <TeamOutlined />,
+      label: 'Resident Profiles',
+      hidden: !hasPermission('residents.view'),
+      children: [
+        { key: 'resident-list', label: 'Resident List', hidden: !hasPermission('residents.view') },
+        { key: 'resident-details', label: 'Profile Details', hidden: !hasPermission('residents.view') },
+      ].filter(item => !item.hidden),
+    },
+    {
+      key: 'member-requests',
+      icon: <UserAddOutlined />,
+      label: 'New Member Requests',
+      hidden: !hasPermission('requests.view'),
+      children: [
+        { key: 'pending-requests', label: 'Pending Requests', hidden: !hasPermission('requests.view') },
+        { key: 'approval-history', label: 'Approval History', hidden: !hasPermission('requests.view') },
+      ].filter(item => !item.hidden),
+    },
+    {
+      key: 'permissions',
+      icon: <SecurityScanOutlined />,
+      label: 'Permissions',
+      hidden: !hasPermission('permissions.view'),
+      children: [
+        { key: 'role-control', label: 'Role-Based Access', hidden: !hasPermission('permissions.view') },
+        { key: 'permissions-list', label: 'Permissions List', hidden: !hasPermission('permissions.view') },
+        { key: 'edit-permissions', label: 'Edit Permissions', hidden: !hasPermission('permissions.edit') },
+      ].filter(item => !item.hidden),
+    },
+    {
+      key: 'activity',
+      icon: <FileTextOutlined />,
+      label: 'Activity Log',
+      hidden: !hasPermission('activity.view'),
+      children: [
+        { key: 'activity-feed', label: 'Activity Feed', hidden: !hasPermission('activity.view') },
+        { key: 'filter-activity', label: 'Filter by Type', hidden: !hasPermission('activity.view') },
+      ].filter(item => !item.hidden),
+    },
+    {
+      key: 'notifications',
+      icon: <NotificationOutlined />,
+      label: 'Notifications',
+      hidden: !hasPermission('notifications.view'),
+      children: [
+        { key: 'notification-list', label: 'Notification List', hidden: !hasPermission('notifications.view') },
+        { key: 'manage-notifications', label: 'Manage Notifications', hidden: !hasPermission('notifications.create') },
+      ].filter(item => !item.hidden),
+    },
+    {
+      key: 'reports',
+      icon: <BarChartOutlined />,
+      label: 'Reports & Analytics',
+      hidden: !hasPermission('reports.view'),
+      children: [
+        { key: 'engagement-report', label: 'Engagement Report', hidden: !hasPermission('reports.view') },
+        { key: 'download-report', label: 'Download Reports', hidden: !hasPermission('reports.download') },
+      ].filter(item => !item.hidden),
+    },
+  ].filter(item => !item.hidden);
+
+  return (
+    <Layout className="min-h-screen">
+      <Sider
+        collapsible
+        collapsed={collapsed}
+        onCollapse={setCollapsed}
+        width={280}
+        className="bg-slate-900"
+        theme="dark"
+      >
+        <div className="flex items-center justify-center p-4 border-b border-slate-700">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+              <UserOutlined className="text-white text-lg" />
+            </div>
+            {!collapsed && (
+              <div>
+                <Title level={4} className="!text-white !mb-0">
+                  Admin Panel
+                </Title>
+                <p className="text-slate-400 text-sm">Resident Management</p>
+              </div>
+            )}
+          </div>
+        </div>
+        
+        <Menu
+          theme="dark"
+          selectedKeys={[currentPage]}
+          mode="inline"
+          items={menuItems}
+          onClick={({ key }) => onMenuSelect(key)}
+          className="bg-slate-900 border-r-0"
+        />
+      </Sider>
+
+      <Layout>
+        <Header className="bg-white shadow-sm px-6 flex items-center justify-between">
+          <div>
+            <Title level={3} className="!mb-0 !text-slate-800">
+              {menuItems.find(item => item.key === currentPage)?.label || 'Dashboard'}
+            </Title>
+          </div>
+          
+          <div className="flex items-center space-x-4">
+            <Badge count={5} size="small">
+              <BellOutlined className="text-xl text-slate-600 hover:text-blue-600 cursor-pointer" />
+            </Badge>
+            <Dropdown overlay={userMenu} trigger={['click']}>
+              <Button type="text" className="flex items-center space-x-2">
+                <Avatar size="large" icon={<UserOutlined />} className="bg-blue-600" />
+                <div className="text-left">
+                  <div className="text-sm font-medium">{user?.name}</div>
+                  <div className="text-xs text-slate-500 capitalize">{user?.role?.replace('_', ' ')}</div>
+                </div>
+              </Button>
+            </Dropdown>
+          </div>
+        </Header>
+
+        <Content className="p-6 bg-slate-50">
+          {children}
+        </Content>
+      </Layout>
+    </Layout>
+  );
+};
+
+export default AdminLayout;
