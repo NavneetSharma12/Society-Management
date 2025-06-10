@@ -12,9 +12,14 @@ import {
   UserAddOutlined,
   SecurityScanOutlined,
   NotificationOutlined,
-  LogoutOutlined
+  LogoutOutlined,
+  DollarCircleOutlined,
+  ExclamationCircleOutlined,
+  CalendarOutlined,
+  ToolOutlined
 } from '@ant-design/icons';
-import { usePermissions } from '../contexts/PermissionContext';
+import { useAppDispatch, useAppSelector } from '../store/hooks';
+import { logout } from '../store/slices/authSlice';
 
 const { Sider, Header, Content } = Layout;
 const { Title } = Typography;
@@ -27,7 +32,12 @@ interface AdminLayoutProps {
 
 const AdminLayout: React.FC<AdminLayoutProps> = ({ children, currentPage, onMenuSelect }) => {
   const [collapsed, setCollapsed] = useState(false);
-  const { user, logout, hasPermission } = usePermissions();
+  const dispatch = useAppDispatch();
+  const { user } = useAppSelector((state) => state.auth);
+
+  const handleLogout = () => {
+    dispatch(logout());
+  };
 
   const userMenu = (
     <Menu>
@@ -35,11 +45,16 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, currentPage, onMenu
         Profile Settings
       </Menu.Item>
       <Menu.Divider />
-      <Menu.Item key="logout" icon={<LogoutOutlined />} onClick={logout}>
+      <Menu.Item key="logout" icon={<LogoutOutlined />} onClick={handleLogout}>
         Logout
       </Menu.Item>
     </Menu>
   );
+
+  const hasPermission = (permission: string): boolean => {
+    if (!user) return false;
+    return user.permissions.includes(permission as any);
+  };
 
   const menuItems = [
     {
@@ -51,7 +66,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, currentPage, onMenu
     {
       key: 'residents',
       icon: <TeamOutlined />,
-      label: 'Resident Profiles',
+      label: 'Resident Management',
       hidden: !hasPermission('residents.view'),
       children: [
         { key: 'resident-list', label: 'Resident List', hidden: !hasPermission('residents.view') },
@@ -59,13 +74,49 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, currentPage, onMenu
       ].filter(item => !item.hidden),
     },
     {
-      key: 'member-requests',
+      key: 'requests',
       icon: <UserAddOutlined />,
-      label: 'New Member Requests',
+      label: 'Member Requests',
       hidden: !hasPermission('requests.view'),
       children: [
         { key: 'pending-requests', label: 'Pending Requests', hidden: !hasPermission('requests.view') },
         { key: 'approval-history', label: 'Approval History', hidden: !hasPermission('requests.view') },
+      ].filter(item => !item.hidden),
+    },
+    {
+      key: 'billing',
+      icon: <DollarCircleOutlined />,
+      label: 'Billing & Accounting',
+      hidden: !hasPermission('reports.view'),
+      children: [
+        { key: 'billing-management', label: 'Billing Management', hidden: !hasPermission('reports.view') },
+      ].filter(item => !item.hidden),
+    },
+    {
+      key: 'complaints',
+      icon: <ExclamationCircleOutlined />,
+      label: 'Complaint Management',
+      hidden: !hasPermission('requests.view'),
+      children: [
+        { key: 'complaint-management', label: 'View Complaints', hidden: !hasPermission('requests.view') },
+      ].filter(item => !item.hidden),
+    },
+    {
+      key: 'facilities',
+      icon: <CalendarOutlined />,
+      label: 'Facility Booking',
+      hidden: !hasPermission('requests.view'),
+      children: [
+        { key: 'facility-booking', label: 'Manage Bookings', hidden: !hasPermission('requests.view') },
+      ].filter(item => !item.hidden),
+    },
+    {
+      key: 'staff',
+      icon: <ToolOutlined />,
+      label: 'Staff & Vendors',
+      hidden: !hasPermission('residents.view'),
+      children: [
+        { key: 'staff-management', label: 'Staff Management', hidden: !hasPermission('residents.view') },
       ].filter(item => !item.hidden),
     },
     {
@@ -75,6 +126,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, currentPage, onMenu
       hidden: !hasPermission('permissions.view'),
       children: [
         { key: 'role-control', label: 'Role-Based Access', hidden: !hasPermission('permissions.view') },
+        { key: 'user-management', label: 'User Management', hidden: !hasPermission('permissions.edit') },
         { key: 'permissions-list', label: 'Permissions List', hidden: !hasPermission('permissions.view') },
         { key: 'edit-permissions', label: 'Edit Permissions', hidden: !hasPermission('permissions.edit') },
       ].filter(item => !item.hidden),
@@ -131,7 +183,9 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, currentPage, onMenu
                 <Title level={4} className="!text-white !mb-0">
                   Admin Panel
                 </Title>
-                <p className="text-slate-400 text-sm">Resident Management</p>
+                <p className="text-slate-400 text-sm">
+                  {user?.societyName || 'Management System'}
+                </p>
               </div>
             )}
           </div>
@@ -149,7 +203,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, currentPage, onMenu
 
       <Layout>
         <Header className="bg-white shadow-sm px-6 flex items-center justify-between">
-          <div>
+          <div className="flex items-center space-x-4">
             <Title level={3} className="!mb-0 !text-slate-800">
               {menuItems.find(item => item.key === currentPage)?.label || 'Dashboard'}
             </Title>

@@ -1,30 +1,36 @@
+
 import React from 'react';
-import { Card, Row, Col, Statistic, Progress, List, Avatar, Badge, Typography } from 'antd';
+import { Card, Row, Col, Statistic, Progress, List, Avatar, Badge, Typography, Alert } from 'antd';
 import {
   UserOutlined,
   TeamOutlined,
   ClockCircleOutlined,
   CheckCircleOutlined,
-  RiseOutlined,
+  DollarCircleOutlined,
   ArrowUpOutlined,
-  ArrowDownOutlined
+  ArrowDownOutlined,
+  ExclamationCircleOutlined,
+  CalendarOutlined
 } from '@ant-design/icons';
+import { useAppSelector } from '../store/hooks';
 
 const { Title, Text } = Typography;
 
 const Dashboard: React.FC = () => {
+  const { user } = useAppSelector((state) => state.auth);
+
   const stats = [
     {
       title: 'Total Residents',
-      value: 284,
-      change: 12,
+      value: 95,
+      change: 8,
       positive: true,
       icon: <TeamOutlined className="text-blue-600" />,
       color: 'bg-blue-100'
     },
     {
       title: 'Pending Requests',
-      value: 8,
+      value: 12,
       change: 3,
       positive: false,
       icon: <ClockCircleOutlined className="text-orange-600" />,
@@ -32,19 +38,19 @@ const Dashboard: React.FC = () => {
     },
     {
       title: 'Active Members',
-      value: 267,
+      value: 89,
       change: 5,
       positive: true,
       icon: <CheckCircleOutlined className="text-green-600" />,
       color: 'bg-green-100'
     },
     {
-      title: 'Monthly Growth',
-      value: '12%',
-      change: 2.5,
-      positive: true,
-      icon: <RiseOutlined className="text-purple-600" />,
-      color: 'bg-purple-100'
+      title: 'Outstanding Dues',
+      value: '₹85,240',
+      change: 12.5,
+      positive: false,
+      icon: <DollarCircleOutlined className="text-red-600" />,
+      color: 'bg-red-100'
     }
   ];
 
@@ -52,41 +58,56 @@ const Dashboard: React.FC = () => {
     {
       id: 1,
       user: 'Sarah Johnson',
-      action: 'submitted a new member request',
-      time: '2 minutes ago',
+      action: 'submitted maintenance request for Unit A-204',
+      time: '15 minutes ago',
       type: 'request'
     },
     {
       id: 2,
       user: 'Mike Chen',
-      action: 'updated profile information',
-      time: '15 minutes ago',
-      type: 'update'
+      action: 'paid monthly maintenance fee',
+      time: '1 hour ago',
+      type: 'payment'
     },
     {
       id: 3,
       user: 'Emily Davis',
-      action: 'approved member request for John Smith',
-      time: '1 hour ago',
-      type: 'approval'
+      action: 'booked community hall for birthday party',
+      time: '2 hours ago',
+      type: 'booking'
     },
     {
       id: 4,
       user: 'Alex Rodriguez',
-      action: 'logged maintenance request',
-      time: '2 hours ago',
-      type: 'maintenance'
+      action: 'submitted complaint about parking issue',
+      time: '3 hours ago',
+      type: 'complaint'
     }
   ];
 
   const pendingRequests = [
-    { name: 'James Wilson', email: 'james.wilson@email.com', date: '2024-06-07', unit: 'A-204' },
-    { name: 'Lisa Brown', email: 'lisa.brown@email.com', date: '2024-06-06', unit: 'B-105' },
-    { name: 'David Lee', email: 'david.lee@email.com', date: '2024-06-05', unit: 'C-301' }
+    { name: 'James Wilson', email: 'james.wilson@email.com', date: '2024-06-07', unit: 'A-204', type: 'Maintenance' },
+    { name: 'Lisa Brown', email: 'lisa.brown@email.com', date: '2024-06-06', unit: 'B-105', type: 'Complaint' },
+    { name: 'David Lee', email: 'david.lee@email.com', date: '2024-06-05', unit: 'C-301', type: 'Booking' }
+  ];
+
+  const urgentMatters = [
+    { title: 'Water Tank Cleaning', priority: 'High', dueDate: 'Today' },
+    { title: 'Elevator Maintenance', priority: 'Medium', dueDate: 'Tomorrow' },
+    { title: 'Security Meeting', priority: 'High', dueDate: '2 days' }
   ];
 
   return (
     <div className="space-y-6">
+      {/* Welcome Message */}
+      <Alert
+        message={`Welcome back, ${user?.name}!`}
+        description={`Managing ${user?.societyName || 'your society'} - You have 12 pending items requiring attention.`}
+        type="info"
+        showIcon
+        className="mb-6"
+      />
+
       {/* Stats Cards */}
       <Row gutter={[16, 16]}>
         {stats.map((stat, index) => (
@@ -117,11 +138,11 @@ const Dashboard: React.FC = () => {
       <Row gutter={[16, 16]}>
         {/* Occupancy Rate */}
         <Col xs={24} lg={8}>
-          <Card title="Occupancy Rate" className="h-full">
+          <Card title="Unit Occupancy" className="h-full">
             <div className="text-center">
               <Progress
                 type="circle"
-                percent={89}
+                percent={79}
                 strokeColor={{
                   '0%': '#108ee9',
                   '100%': '#87d068',
@@ -129,8 +150,8 @@ const Dashboard: React.FC = () => {
                 className="mb-4"
               />
               <div>
-                <Title level={4}>267/300 Units</Title>
-                <Text className="text-slate-600">89% Occupied</Text>
+                <Title level={4}>95/120 Units</Title>
+                <Text className="text-slate-600">79% Occupied</Text>
               </div>
             </div>
           </Card>
@@ -159,30 +180,33 @@ const Dashboard: React.FC = () => {
           </Card>
         </Col>
 
-        {/* Pending Requests */}
+        {/* Urgent Matters */}
         <Col xs={24} lg={8}>
           <Card 
             title={
               <div className="flex items-center justify-between">
-                <span>Pending Requests</span>
-                <Badge count={pendingRequests.length} className="bg-orange-500" />
+                <span>Urgent Matters</span>
+                <Badge count={urgentMatters.length} className="bg-red-500" />
               </div>
             } 
             className="h-full"
           >
             <List
-              dataSource={pendingRequests}
+              dataSource={urgentMatters}
               renderItem={(item) => (
                 <List.Item className="border-0 px-0">
                   <div className="flex items-center justify-between w-full">
                     <div className="flex items-center space-x-3">
-                      <Avatar icon={<UserOutlined />} />
+                      <ExclamationCircleOutlined className={`${item.priority === 'High' ? 'text-red-500' : 'text-orange-500'}`} />
                       <div>
-                        <div className="font-medium">{item.name}</div>
-                        <Text className="text-xs text-slate-500">Unit {item.unit}</Text>
+                        <div className="font-medium text-sm">{item.title}</div>
+                        <Text className="text-xs text-slate-500">Due: {item.dueDate}</Text>
                       </div>
                     </div>
-                    <Badge status="warning" text="Pending" />
+                    <Badge 
+                      status={item.priority === 'High' ? 'error' : 'warning'} 
+                      text={item.priority} 
+                    />
                   </div>
                 </List.Item>
               )}
@@ -190,6 +214,30 @@ const Dashboard: React.FC = () => {
           </Card>
         </Col>
       </Row>
+
+      {/* Pending Actions */}
+      <Card title="Pending Actions">
+        <List
+          dataSource={pendingRequests}
+          renderItem={(item) => (
+            <List.Item className="border-0">
+              <div className="flex items-center justify-between w-full">
+                <div className="flex items-center space-x-4">
+                  <Avatar icon={<UserOutlined />} />
+                  <div>
+                    <div className="font-medium">{item.name}</div>
+                    <Text className="text-sm text-slate-500">Unit {item.unit} - {item.type}</Text>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-4">
+                  <Text className="text-sm text-slate-500">{item.date}</Text>
+                  <Badge status="warning" text="Pending" />
+                </div>
+              </div>
+            </List.Item>
+          )}
+        />
+      </Card>
     </div>
   );
 };

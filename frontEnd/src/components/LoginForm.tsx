@@ -1,30 +1,28 @@
 
-import React, { useState } from 'react';
+import React, { useEffect } from 'react';
 import { Card, Form, Input, Button, Alert, Typography } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
-import { usePermissions } from '../contexts/PermissionContext';
+import { useAppDispatch, useAppSelector } from '../store/hooks';
+import { loginUser, clearError } from '../store/slices/authSlice';
 
 const { Title, Text } = Typography;
 
 const LoginForm: React.FC = () => {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const { login } = usePermissions();
+  const dispatch = useAppDispatch();
+  const { loading, error } = useAppSelector((state) => state.auth);
+
+  useEffect(() => {
+    return () => {
+      dispatch(clearError());
+    };
+  }, [dispatch]);
 
   const onFinish = async (values: { email: string; password: string }) => {
-    setLoading(true);
-    setError('');
-    
-    try {
-      const success = await login(values.email, values.password);
-      if (!success) {
-        setError('Invalid email or password');
-      }
-    } catch (err) {
-      setError('Login failed. Please try again.');
-    } finally {
-      setLoading(false);
-    }
+    await dispatch(loginUser(values.email, values.password));
+  };
+
+  const handleClearError = () => {
+    dispatch(clearError());
   };
 
   return (
@@ -44,6 +42,8 @@ const LoginForm: React.FC = () => {
             type="error"
             className="mb-4"
             showIcon
+            closable
+            onClose={handleClearError}
           />
         )}
 

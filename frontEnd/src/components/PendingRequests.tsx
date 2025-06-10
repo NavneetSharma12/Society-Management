@@ -1,243 +1,292 @@
-import React from 'react';
-import { Card, List, Avatar, Button, Tag, Space, Modal, Typography, Divider } from 'antd';
-import {
-  UserOutlined,
-  CheckOutlined,
-  CloseOutlined,
-  EyeOutlined,
-  CalendarOutlined,
-  MailOutlined,
-  PhoneOutlined,
-  HomeOutlined
-} from '@ant-design/icons';
 
-const { Text, Title } = Typography;
-const { confirm } = Modal;
+import React, { useState, useEffect } from 'react';
+import { Card, Table, Button, Modal, Space, Typography, Tag, Avatar, Badge } from 'antd';
+import { EyeOutlined, CheckOutlined, CloseOutlined, UserAddOutlined } from '@ant-design/icons';
+import { useAppSelector } from '../store/hooks';
+import { MemberRequest } from '../types/user';
+import ProtectedRoute from './ProtectedRoute';
 
-interface PendingRequest {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  requestedUnit: string;
-  submissionDate: string;
-  documents: string[];
-  status: 'pending' | 'under_review';
-  message?: string;
-}
+const { Title, Text } = Typography;
 
 const PendingRequests: React.FC = () => {
-  const pendingRequests: PendingRequest[] = [
+  const { user } = useAppSelector((state) => state.auth);
+  
+  const hasPermission = (permission: string): boolean => {
+    if (!user) return false;
+    return user.permissions.includes(permission as any);
+  };
+
+  const [requests, setRequests] = useState<MemberRequest[]>([
     {
       id: '1',
-      name: 'James Wilson',
-      email: 'james.wilson@email.com',
-      phone: '+1 (555) 123-4567',
-      requestedUnit: 'A-204',
-      submissionDate: '2024-06-07',
-      documents: ['ID Copy', 'Income Proof', 'References'],
+      residentName: 'John Doe',
+      email: 'john@email.com',
+      phone: '+91 9876543212',
+      unitNumber: 'C-301',
+      societyId: '1',
+      societyName: 'Green Valley Apartments',
+      requestDate: '2024-03-01',
       status: 'pending',
-      message: 'Looking forward to joining the community. I have all required documents ready.'
+      documents: ['id_proof.pdf', 'address_proof.pdf'],
+      notes: 'New resident moving in'
     },
     {
       id: '2',
-      name: 'Lisa Brown',
-      email: 'lisa.brown@email.com',
-      phone: '+1 (555) 234-5678',
-      requestedUnit: 'B-105',
-      submissionDate: '2024-06-06',
-      documents: ['ID Copy', 'Income Proof'],
-      status: 'under_review',
-      message: 'Excited to be part of this community. Please let me know if you need any additional information.'
-    },
-    {
-      id: '3',
-      name: 'David Lee',
-      email: 'david.lee@email.com',
-      phone: '+1 (555) 345-6789',
-      requestedUnit: 'C-301',
-      submissionDate: '2024-06-05',
-      documents: ['ID Copy', 'Income Proof', 'References', 'Background Check'],
-      status: 'pending'
+      residentName: 'Jane Smith',
+      email: 'jane@email.com',
+      phone: '+91 9876543213',
+      unitNumber: 'D-102',
+      societyId: '1',
+      societyName: 'Green Valley Apartments',
+      requestDate: '2024-03-02',
+      status: 'pending',
+      documents: ['lease_agreement.pdf'],
+      notes: 'Tenant application'
     }
-  ];
+  ]);
 
-  const showApprovalConfirm = (request: PendingRequest) => {
-    confirm({
-      title: 'Approve Member Request',
-      content: `Are you sure you want to approve ${request.name} for unit ${request.requestedUnit}?`,
-      okText: 'Approve',
-      okType: 'primary',
-      cancelText: 'Cancel',
-      onOk() {
-        console.log('Approved:', request.name);
-        // Handle approval logic here
-      },
-    });
+  const [filteredRequests, setFilteredRequests] = useState<MemberRequest[]>([]);
+  const [selectedRequest, setSelectedRequest] = useState<MemberRequest | null>(null);
+  const [isDetailModalVisible, setIsDetailModalVisible] = useState(false);
+
+  useEffect(() => {
+    let filtered = requests;
+    
+    // Filter by user's society if not super admin
+    if (user?.role !== 'super_admin' && user?.societyId) {
+      filtered = filtered.filter(request => request.societyId === user.societyId);
+    }
+    
+    setFilteredRequests(filtered);
+  }, [requests, user]);
+
+  const handleApprove = (requestId: string) => {
+    setRequests(prev => 
+      prev.map(req => 
+        req.id === requestId ? { ...req, status: 'approved' as const } : req
+      )
+    );
   };
 
-  const showRejectionConfirm = (request: PendingRequest) => {
-    confirm({
-      title: 'Reject Member Request',
-      content: `Are you sure you want to reject ${request.name}'s application?`,
-      okText: 'Reject',
-      okType: 'danger',
-      cancelText: 'Cancel',
-      onOk() {
-        console.log('Rejected:', request.name);
-        // Handle rejection logic here
-      },
-    });
+  const handleReject = (requestId: string) => {
+    setRequests(prev => 
+      prev.map(req => 
+        req.id === requestId ? { ...req, status: 'rejected' as const } : req
+      )
+    );
   };
 
-  const showRequestDetails = (request: PendingRequest) => {
-    Modal.info({
-      title: 'Member Request Details',
-      width: 600,
-      content: (
-        <div className="space-y-4 mt-4">
-          <div className="flex items-center space-x-3">
-            <Avatar size={64} icon={<UserOutlined />} />
-            <div>
-              <Title level={4} className="!mb-1">{request.name}</Title>
-              <Text className="text-slate-600">Requesting Unit {request.requestedUnit}</Text>
-            </div>
-          </div>
-          
-          <Divider />
-          
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <div className="flex items-center space-x-2">
-                <MailOutlined className="text-slate-500" />
-                <Text>{request.email}</Text>
-              </div>
-              <div className="flex items-center space-x-2">
-                <PhoneOutlined className="text-slate-500" />
-                <Text>{request.phone}</Text>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <div className="flex items-center space-x-2">
-                <HomeOutlined className="text-slate-500" />
-                <Text>Unit {request.requestedUnit}</Text>
-              </div>
-              <div className="flex items-center space-x-2">
-                <CalendarOutlined className="text-slate-500" />
-                <Text>{request.submissionDate}</Text>
-              </div>
-            </div>
-          </div>
-          
-          <Divider />
-          
+  const handleViewDetails = (request: MemberRequest) => {
+    setSelectedRequest(request);
+    setIsDetailModalVisible(true);
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'pending': return 'warning';
+      case 'approved': return 'success';
+      case 'rejected': return 'error';
+      default: return 'default';
+    }
+  };
+
+  const pendingCount = filteredRequests.filter(req => req.status === 'pending').length;
+
+  const columns = [
+    {
+      title: 'Applicant',
+      dataIndex: 'residentName',
+      key: 'residentName',
+      render: (name: string, record: MemberRequest) => (
+        <div className="flex items-center space-x-3">
+          <Avatar icon={<UserAddOutlined />} className="bg-blue-600" />
           <div>
-            <Text strong>Submitted Documents:</Text>
-            <div className="mt-2 space-x-2">
-              {request.documents.map((doc, index) => (
-                <Tag key={index} color="blue">{doc}</Tag>
-              ))}
-            </div>
+            <div className="font-medium">{name}</div>
+            <div className="text-sm text-gray-500">Unit: {record.unitNumber}</div>
           </div>
-          
-          {request.message && (
-            <>
-              <Divider />
-              <div>
-                <Text strong>Message:</Text>
-                <div className="mt-2 p-3 bg-slate-50 rounded">
-                  <Text>{request.message}</Text>
-                </div>
-              </div>
-            </>
-          )}
         </div>
       ),
-    });
-  };
+    },
+    {
+      title: 'Contact',
+      key: 'contact',
+      render: (_, record: MemberRequest) => (
+        <div>
+          <div className="text-sm">{record.email}</div>
+          <div className="text-sm text-gray-500">{record.phone}</div>
+        </div>
+      ),
+    },
+    {
+      title: 'Society',
+      dataIndex: 'societyName',
+      key: 'societyName',
+    },
+    {
+      title: 'Request Date',
+      dataIndex: 'requestDate',
+      key: 'requestDate',
+    },
+    {
+      title: 'Documents',
+      dataIndex: 'documents',
+      key: 'documents',
+      render: (documents: string[]) => (
+        <Badge count={documents.length} showZero color="blue">
+          <span className="text-sm">Files</span>
+        </Badge>
+      ),
+    },
+    {
+      title: 'Status',
+      dataIndex: 'status',
+      key: 'status',
+      render: (status: string) => (
+        <Tag color={getStatusColor(status)}>
+          {status.toUpperCase()}
+        </Tag>
+      ),
+    },
+    {
+      title: 'Actions',
+      key: 'actions',
+      render: (_, record: MemberRequest) => (
+        <Space>
+          <Button
+            icon={<EyeOutlined />}
+            onClick={() => handleViewDetails(record)}
+            size="small"
+          >
+            View
+          </Button>
+          {record.status === 'pending' && hasPermission('requests.approve') && (
+            <Button
+              icon={<CheckOutlined />}
+              onClick={() => handleApprove(record.id)}
+              size="small"
+              className="text-green-600 border-green-600 hover:bg-green-50"
+            >
+              Approve
+            </Button>
+          )}
+          {record.status === 'pending' && hasPermission('requests.reject') && (
+            <Button
+              icon={<CloseOutlined />}
+              onClick={() => handleReject(record.id)}
+              size="small"
+              danger
+            >
+              Reject
+            </Button>
+          )}
+        </Space>
+      ),
+    },
+  ];
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <Title level={3} className="!mb-1">New Member Requests</Title>
-            <Text className="text-slate-600">Review and approve pending member applications</Text>
+    <ProtectedRoute permission="requests.view">
+      <div className="space-y-6">
+        <Card>
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <Title level={3} className="!mb-1 flex items-center gap-2">
+                New Member Requests
+                {pendingCount > 0 && (
+                  <Badge count={pendingCount} className="ml-2" />
+                )}
+              </Title>
+              <Text className="text-gray-600">
+                Review and manage new resident applications
+              </Text>
+            </div>
           </div>
-          <Tag color="orange">{pendingRequests.length} Pending</Tag>
-        </div>
 
-        <List
-          dataSource={pendingRequests}
-          renderItem={(request) => (
-            <List.Item
-              className="border border-slate-200 rounded-lg p-4 mb-4 hover:shadow-md transition-shadow"
-              actions={[
-                <Button
-                  key="view"
-                  icon={<EyeOutlined />}
-                  onClick={() => showRequestDetails(request)}
-                >
-                  View Details
-                </Button>,
-                <Button
-                  key="approve"
-                  type="primary"
-                  icon={<CheckOutlined />}
-                  className="bg-green-600 hover:bg-green-700"
-                  onClick={() => showApprovalConfirm(request)}
-                >
-                  Approve
-                </Button>,
-                <Button
-                  key="reject"
-                  danger
-                  icon={<CloseOutlined />}
-                  onClick={() => showRejectionConfirm(request)}
-                >
-                  Reject
-                </Button>,
-              ]}
-            >
-              <List.Item.Meta
-                avatar={<Avatar size="large" icon={<UserOutlined />} />}
-                title={
-                  <div className="flex items-center space-x-3">
-                    <span className="text-lg font-medium">{request.name}</span>
-                    <Tag color={request.status === 'pending' ? 'orange' : 'blue'}>
-                      {request.status === 'pending' ? 'Pending' : 'Under Review'}
-                    </Tag>
-                  </div>
-                }
-                description={
-                  <div className="space-y-2">
-                    <div className="flex items-center space-x-4 text-sm text-slate-600">
-                      <span className="flex items-center space-x-1">
-                        <MailOutlined />
-                        <span>{request.email}</span>
-                      </span>
-                      <span className="flex items-center space-x-1">
-                        <HomeOutlined />
-                        <span>Unit {request.requestedUnit}</span>
-                      </span>
-                      <span className="flex items-center space-x-1">
-                        <CalendarOutlined />
-                        <span>{request.submissionDate}</span>
-                      </span>
-                    </div>
-                    <div className="space-x-2">
-                      {request.documents.map((doc, index) => (
-                        <Tag key={index}>{doc}</Tag>
-                      ))}
-                    </div>
-                  </div>
-                }
-              />
-            </List.Item>
+          <Table
+            columns={columns}
+            dataSource={filteredRequests}
+            rowKey="id"
+            pagination={{
+              pageSize: 10,
+              showSizeChanger: true,
+            }}
+            className="shadow-sm"
+          />
+        </Card>
+
+        <Modal
+          title="Request Details"
+          open={isDetailModalVisible}
+          onCancel={() => setIsDetailModalVisible(false)}
+          footer={null}
+          width={700}
+        >
+          {selectedRequest && (
+            <div className="space-y-4">
+              <div className="flex items-center space-x-4">
+                <Avatar size={64} icon={<UserAddOutlined />} className="bg-blue-600" />
+                <div>
+                  <Title level={4} className="!mb-1">{selectedRequest.residentName}</Title>
+                  <Tag color={getStatusColor(selectedRequest.status)}>
+                    {selectedRequest.status.toUpperCase()}
+                  </Tag>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <Card size="small" title="Contact Information">
+                  <p><strong>Email:</strong> {selectedRequest.email}</p>
+                  <p><strong>Phone:</strong> {selectedRequest.phone}</p>
+                </Card>
+
+                <Card size="small" title="Residence Details">
+                  <p><strong>Unit:</strong> {selectedRequest.unitNumber}</p>
+                  <p><strong>Society:</strong> {selectedRequest.societyName}</p>
+                </Card>
+              </div>
+
+              <Card size="small" title="Application Details">
+                <p><strong>Request Date:</strong> {selectedRequest.requestDate}</p>
+                <p><strong>Documents:</strong> {selectedRequest.documents.join(', ')}</p>
+                {selectedRequest.notes && (
+                  <p><strong>Notes:</strong> {selectedRequest.notes}</p>
+                )}
+              </Card>
+
+              {selectedRequest.status === 'pending' && (
+                <div className="flex justify-end space-x-2">
+                  {hasPermission('requests.approve') && (
+                    <Button
+                      type="primary"
+                      icon={<CheckOutlined />}
+                      onClick={() => {
+                        handleApprove(selectedRequest.id);
+                        setIsDetailModalVisible(false);
+                      }}
+                      className="bg-green-600"
+                    >
+                      Approve Request
+                    </Button>
+                  )}
+                  {hasPermission('requests.reject') && (
+                    <Button
+                      danger
+                      icon={<CloseOutlined />}
+                      onClick={() => {
+                        handleReject(selectedRequest.id);
+                        setIsDetailModalVisible(false);
+                      }}
+                    >
+                      Reject Request
+                    </Button>
+                  )}
+                </div>
+              )}
+            </div>
           )}
-        />
-      </Card>
-    </div>
+        </Modal>
+      </div>
+    </ProtectedRoute>
   );
 };
 

@@ -2,21 +2,27 @@
 import React, { useState } from 'react';
 import AdminLayout from '../components/AdminLayout';
 import Dashboard from '../components/Dashboard';
+import SuperAdminDashboard from '../components/SuperAdminDashboard';
 import ResidentList from '../components/ResidentList';
 import PendingRequests from '../components/PendingRequests';
 import PermissionManager from '../components/PermissionManager';
+import UserManagement from '../components/UserManagement';
 import ActivityFeed from '../components/ActivityFeed';
 import ActivityFilter from '../components/ActivityFilter';
+import BillingManagement from '../components/BillingManagement';
+import ComplaintManagement from '../components/ComplaintManagement';
+import FacilityBooking from '../components/FacilityBooking';
+import StaffManagement from '../components/StaffManagement';
 import LoginForm from '../components/LoginForm';
 import ProtectedRoute from '../components/ProtectedRoute';
-import { usePermissions } from '../contexts/PermissionContext';
+import { useAppSelector } from '../store/hooks';
 import { Card, Typography } from 'antd';
 
 const { Title, Text } = Typography;
 
 const AdminPanel: React.FC = () => {
   const [currentPage, setCurrentPage] = useState('dashboard');
-  const { user } = usePermissions();
+  const { user } = useAppSelector((state) => state.auth);
 
   if (!user) {
     return <LoginForm />;
@@ -25,27 +31,15 @@ const AdminPanel: React.FC = () => {
   const renderContent = () => {
     switch (currentPage) {
       case 'dashboard':
-        return (
+        return user?.role === 'super_admin' ? <SuperAdminDashboard /> : (
           <ProtectedRoute permission="dashboard.view">
             <Dashboard />
           </ProtectedRoute>
         );
       case 'resident-list':
-        return (
-          <ProtectedRoute permission="residents.view">
-            <ResidentList />
-          </ProtectedRoute>
-        );
+        return <ResidentList />;
       case 'pending-requests':
-        return (
-          <ProtectedRoute permission="requests.view">
-            {/* <PendingRequests /> */}
-            <Card>
-              <Title level={3}>Resident Profile Details</Title>
-              <Text>Detailed view of resident information, status controls, and admin notes section.</Text>
-            </Card>
-          </ProtectedRoute>
-        );
+        return <PendingRequests />;
       case 'resident-details':
         return (
           <ProtectedRoute permission="residents.view">
@@ -64,16 +58,18 @@ const AdminPanel: React.FC = () => {
             </Card>
           </ProtectedRoute>
         );
+      case 'billing-management':
+        return <BillingManagement />;
+      case 'complaint-management':
+        return <ComplaintManagement />;
+      case 'facility-booking':
+        return <FacilityBooking />;
+      case 'staff-management':
+        return <StaffManagement />;
       case 'role-control':
-        // return <PermissionManager />;
-        return (
-          <>
-            <Card>
-              <Title level={3}>Role Control</Title>
-              <Text>Manage user roles and permissions, assign roles to residents.</Text>
-            </Card>
-          </>
-        );
+        return <PermissionManager />;
+      case 'user-management':
+        return <UserManagement />;
       case 'permissions-list':
         return (
           <ProtectedRoute permission="permissions.view">
@@ -93,21 +89,9 @@ const AdminPanel: React.FC = () => {
           </ProtectedRoute>
         );
       case 'activity-feed':
-        // return <ActivityFeed />;
-        return (
-          <Card>
-              <Title level={3}>Resident Profile Details</Title>
-              <Text>Detailed view of resident information, status controls, and admin notes section.</Text>
-            </Card>
-        )
+        return <ActivityFeed />;
       case 'filter-activity':
-        // return <ActivityFilter />;
-        return (
-          <Card>
-              <Title level={3}>Resident Profile Details</Title>
-              <Text>Detailed view of resident information, status controls, and admin notes section.</Text>
-            </Card>
-        )
+        return <ActivityFilter />;
       case 'notification-list':
         return (
           <ProtectedRoute permission="notifications.view">
@@ -145,7 +129,7 @@ const AdminPanel: React.FC = () => {
           </ProtectedRoute>
         );
       default:
-        return (
+        return user?.role === 'super_admin' ? <SuperAdminDashboard /> : (
           <ProtectedRoute permission="dashboard.view">
             <Dashboard />
           </ProtectedRoute>
