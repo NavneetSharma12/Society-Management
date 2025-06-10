@@ -1,9 +1,10 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Card, Typography, Button } from 'antd';
 import { LockOutlined } from '@ant-design/icons';
 import { useAppSelector } from '../store/hooks';
 import { Permission } from '../types/permissions';
+import { useNavigate } from 'react-router-dom';
 
 const { Title, Text } = Typography;
 
@@ -47,6 +48,18 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     
     return true;
   };
+
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!user) {
+      navigate('/login');
+    }
+  }, [user, navigate]);
+
+  if (!user) {
+    return null;
+  }
 
   if (!hasAccess()) {
     if (fallback) {

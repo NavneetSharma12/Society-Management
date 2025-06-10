@@ -17,15 +17,17 @@ import LoginForm from '../components/LoginForm';
 import ProtectedRoute from '../components/ProtectedRoute';
 import { useAppSelector } from '../store/hooks';
 import { Card, Typography } from 'antd';
+import { useNavigate } from 'react-router-dom';
 
 const { Title, Text } = Typography;
 
 const AdminPanel: React.FC = () => {
   const [currentPage, setCurrentPage] = useState('dashboard');
   const { user } = useAppSelector((state) => state.auth);
-
+  const navigate = useNavigate();
+  console.log("user",user)
   if (!user) {
-    return <LoginForm />;
+    navigate("/login");
   }
 
   const renderContent = () => {

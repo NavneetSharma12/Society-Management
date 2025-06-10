@@ -20,6 +20,7 @@ import {
 } from '@ant-design/icons';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { logout } from '../store/slices/authSlice';
+import { useNavigate } from 'react-router-dom';
 
 const { Sider, Header, Content } = Layout;
 const { Title } = Typography;
@@ -34,10 +35,24 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, currentPage, onMenu
   const [collapsed, setCollapsed] = useState(false);
   const dispatch = useAppDispatch();
   const { user } = useAppSelector((state) => state.auth);
-
-  const handleLogout = () => {
-    dispatch(logout());
+  const navigate = useNavigate();
+  const handleLogout = async () => {
+    const success = await dispatch(logout());
+    if (success) {
+      // Redirect to login page after successful logout
+      navigate('/login');
+      // window.location.href = '/login';
+    }
   };
+  // const handleLogout = async () => {
+  //   try {
+  //     await dispatch(logout()).unwrap();
+  //     // Redirect to login page after successful logout
+  //     window.location.href = '/login';
+  //   } catch (error) {
+  //     // Error is already handled in the thunk
+  //   }
+  // };
 
   const userMenu = (
     <Menu>

@@ -4,12 +4,14 @@ import { Card, Form, Input, Button, Alert, Typography } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { loginUser, clearError } from '../store/slices/authSlice';
+import { useNavigate } from 'react-router-dom';
 
 const { Title, Text } = Typography;
 
 const LoginForm: React.FC = () => {
   const dispatch = useAppDispatch();
-  const { loading, error } = useAppSelector((state) => state.auth);
+  const navigate = useNavigate();
+  const { loading, error, user } = useAppSelector((state) => state.auth);
 
   useEffect(() => {
     return () => {
@@ -18,7 +20,10 @@ const LoginForm: React.FC = () => {
   }, [dispatch]);
 
   const onFinish = async (values: { email: string; password: string }) => {
-    await dispatch(loginUser(values.email, values.password));
+    const success = await dispatch(loginUser(values.email, values.password));
+    if (success) {
+      navigate('/');
+    }
   };
 
   const handleClearError = () => {
@@ -88,11 +93,9 @@ const LoginForm: React.FC = () => {
           </Form.Item>
         </Form>
 
-        <div className="mt-4 p-3 bg-blue-50 rounded">
-          <Text className="text-sm text-blue-700">
-            <strong>Demo Credentials:</strong><br />
-            Super Admin: super@admin.com / admin123<br />
-            Admin: admin@admin.com / admin123
+        <div className="mt-4 text-center">
+          <Text className="text-sm text-gray-500">
+            Enter your credentials to access the admin panel
           </Text>
         </div>
       </Card>

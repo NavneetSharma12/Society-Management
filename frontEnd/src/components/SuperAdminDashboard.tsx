@@ -1,6 +1,6 @@
 
-import React, { useState } from 'react';
-import { Card, Row, Col, Statistic, Table, Button, Space, Typography, Tag } from 'antd';
+import React, { useState, useEffect } from 'react';
+import { Card, Row, Col, Statistic, Table, Button, Space, Typography, Tag, message } from 'antd';
 import { 
   HomeOutlined, 
   UserOutlined, 
@@ -10,13 +10,25 @@ import {
   EditOutlined,
   EyeOutlined
 } from '@ant-design/icons';
+import { useDispatch, useSelector } from 'react-redux';
+import CreateSocietyModal from './CreateSocietyModal';
 import { Society } from '../types/society';
 import ProtectedRoute from './ProtectedRoute';
+import { fetchSocieties, createSociety } from '../store/slices/societySlice';
+import { RootState, AppDispatch } from '../store';
 
 const { Title, Text } = Typography;
 
 const SuperAdminDashboard: React.FC = () => {
-  const [societies] = useState<Society[]>([
+  const dispatch = useDispatch<AppDispatch>();
+  const { societies = [], loading = false } = useSelector((state: RootState) => state.society) || {};
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+
+  useEffect(() => {
+    dispatch(fetchSocieties());
+  }, [dispatch]);
+
+  const mockSocieties: Society[] = [
     {
       id: '1',
       name: 'Green Valley Apartments',
@@ -55,7 +67,7 @@ const SuperAdminDashboard: React.FC = () => {
       updatedAt: '2024-02-10',
       status: 'active'
     }
-  ]);
+  ];
 
   const columns = [
     {
@@ -125,8 +137,12 @@ const SuperAdminDashboard: React.FC = () => {
             <Title level={2} className="!mb-1">Super Admin Dashboard</Title>
             <Text className="text-gray-600">Manage all societies and administrative functions</Text>
           </div>
-          <Button type="primary" icon={<PlusOutlined />} className="bg-blue-600">
-            Add Society
+          <Button
+            type="primary"
+            icon={<PlusOutlined />}
+            onClick={() => setIsCreateModalOpen(true)}
+          >
+            Create Society
           </Button>
         </div>
 
@@ -188,6 +204,20 @@ const SuperAdminDashboard: React.FC = () => {
           />
         </Card>
       </div>
+      <CreateSocietyModal
+        open={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onSubmit={async (data) => {
+          try {
+            await dispatch(createSociety(data)).unwrap();
+            message.success('Society created successfully');
+            setIsCreateModalOpen(false);
+          } catch (error) {
+            message.error('Failed to create society');
+            console.error('Error creating society:', error);
+          }
+        }}
+      />
     </ProtectedRoute>
   );
 };

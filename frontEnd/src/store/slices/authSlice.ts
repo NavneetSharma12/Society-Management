@@ -1,27 +1,38 @@
 
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { Permission, Role, User } from '../../types/permissions';
 import { DEFAULT_ROLE_PERMISSIONS } from '../../config/permissions';
+import axios from 'axios';
 
-// Mock users for demo - replace with your backend API
-const mockUsers: User[] = [
-  {
-    id: '1',
-    name: 'Super Admin',
-    email: 'super@admin.com',
-    role: 'super_admin',
-    permissions: DEFAULT_ROLE_PERMISSIONS.super_admin
-  },
-  {
-    id: '2',
-    name: 'Admin User',
-    email: 'admin@admin.com',
-    role: 'admin',
-    permissions: DEFAULT_ROLE_PERMISSIONS.admin,
-    societyId: '1',
-    societyName: 'Green Valley Apartments'
+// Async thunks
+// Async thunk for logout
+export const logout = () => async (dispatch: any) => {
+  dispatch(logoutStart());
+  
+  try {
+    const response = await fetch('http://localhost:8000/api/v1/user/logout', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      credentials: 'include' // Important for handling cookies
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Logout failed');
+    }
+
+    dispatch(logoutSuccess());
+    return true;
+  } catch (err) {
+    console.error('Logout error:', err);
+    dispatch(logoutFailure('Logout failed. Please try again.'));
+    return false;
   }
-];
+};
+
 
 interface AuthState {
   user: User | null;
@@ -35,14 +46,21 @@ const initialState: AuthState = {
   error: null,
 };
 
-// Check for existing session on initialization
+// Check for existing session and token on initialization
 const savedUser = localStorage.getItem('admin_user');
-if (savedUser) {
+const savedToken = localStorage.getItem('token');
+
+if (savedUser && savedToken) {
   try {
     initialState.user = JSON.parse(savedUser);
   } catch (error) {
     localStorage.removeItem('admin_user');
+    localStorage.removeItem('token');
   }
+} else {
+  // Clear stored data if either user or token is missing
+  localStorage.removeItem('admin_user');
+  localStorage.removeItem('token');
 }
 
 const authSlice = createSlice({
@@ -53,20 +71,31 @@ const authSlice = createSlice({
       state.loading = true;
       state.error = null;
     },
-    loginSuccess: (state, action: PayloadAction<User>) => {
-      state.user = action.payload;
+    loginSuccess: (state, action: PayloadAction<{user: User; token: string}>) => {
+      state.user = action.payload.user;
       state.loading = false;
       state.error = null;
-      localStorage.setItem('admin_user', JSON.stringify(action.payload));
+      localStorage.setItem('admin_user', JSON.stringify(action.payload.user));
+      localStorage.setItem('token', action.payload.token);
     },
     loginFailure: (state, action: PayloadAction<string>) => {
       state.loading = false;
       state.error = action.payload;
     },
-    logout: (state) => {
+    logoutStart: (state) => {
+      state.loading = true;
+      state.error = null;
+    },
+    logoutSuccess: (state) => {
       state.user = null;
+      state.loading = false;
       state.error = null;
       localStorage.removeItem('admin_user');
+      localStorage.removeItem('token');
+    },
+    logoutFailure: (state, action: PayloadAction<string>) => {
+      state.loading = false;
+      state.error = action.payload;
     },
     clearError: (state) => {
       state.error = null;
@@ -80,28 +109,36 @@ const authSlice = createSlice({
   },
 });
 
-export const { loginStart, loginSuccess, loginFailure, logout, clearError, updateUserPermissions } = authSlice.actions;
+export const { loginStart, loginSuccess, loginFailure, logoutStart, logoutSuccess, logoutFailure, clearError, updateUserPermissions } = authSlice.actions;
 
 // Async thunk for login
 export const loginUser = (email: string, password: string) => async (dispatch: any) => {
-  console.log('Login attempt:', { email, password });
   dispatch(loginStart());
   
   try {
-    // Mock authentication - replace with your backend API
-    console.log('Available users:', mockUsers);
-    const foundUser = mockUsers.find(u => u.email === email);
-    console.log('Found user:', foundUser);
-    console.log('Password check:', password, '===', 'admin123', password === 'admin123');
-    
-    if (foundUser && password === 'admin123') {
-      console.log('Login successful for user:', foundUser);
-      dispatch(loginSuccess(foundUser));
-      return true;
+    const response = await fetch('http://localhost:8000/api/v1/user/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        email,
+        password
+      }),
+      credentials: 'include' // Important for handling cookies
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Login failed');
     }
-    console.log('Login failed - invalid credentials');
-    dispatch(loginFailure('Invalid email or password'));
-    return false;
+    console.log("setUserData",data.result)
+    dispatch(loginSuccess({
+      user: data.result,
+      token: data.token
+    }));
+    return true;
   } catch (err) {
     console.error('Login error:', err);
     dispatch(loginFailure('Login failed. Please try again.'));

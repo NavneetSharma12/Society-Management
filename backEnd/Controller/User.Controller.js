@@ -7,26 +7,66 @@ import PostModel from "../Models/Post.Model.js";
 import { sendResponse } from "../Utils/SendResponse.js";
 import { GenerateOtp, ValidateOTP } from "../Services/User.Services.js";
 
+export const createUser = async (req, res) => {
+  try {
+    const {
+      name,
+      email,
+      password,
+      phone,
+      role,
+      permissions,
+      societyId
+    } = req.body;
+
+    // Validate required fields
+    if (!name || !email || !password || !role) {
+      return sendResponse(res, 400, false, "Please provide all required fields");
+    }
+
+    // Check if user already exists
+    const existingUser = await UserModel.findOne({ email });
+    if (existingUser) {
+      return sendResponse(res, 400, false, "Email already in use");
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create new user
+    const user = await UserModel.create({
+      name,
+      email,
+      password: hashedPassword,
+      phone,
+      role,
+      permissions,
+      societyId,
+      status: 'active'
+    });
+
+    return sendResponse(res, 201, true, "User created successfully", user);
+  } catch (error) {
+    console.error("Error in createUser:", error);
+    return sendResponse(res, 500, false, "Internal server error");
+  }
+};
+
 export const register = async (req, res) => {
   try {
     const { username, email, password } = req.body;
-    console.log("username", req.body);
 
-    if (!username && !email && !password) {
-      return res.status(401).json({
-        message: "Please fill in all fields",
-        success: false,
-      });
+    if (!username || !email || !password) {
+      return sendResponse(res, 400, false, "Please fill in all fields");
     }
+
     const existingUser = await UserModel.findOne({ email });
     if (existingUser) {
-      return res.status(401).json({
-        message: "Email already in use",
-        success: false,
-      });
+      return sendResponse(res, 400, false, "Email already in use");
     }
+
     const hashedPassword = await bcrypt.hash(password, 10);
-    await UserModel.create({
+    const user = await UserModel.create({
       username,
       email,
       password: hashedPassword,
@@ -43,64 +83,89 @@ export const register = async (req, res) => {
 export const Login = async (req, res) => {
   try {
     const { email, password } = req.body;
-    if (!email && !password) {
-      return sendResponse(res, 401, "Please fill in all fields", false);
-      // return res.status(401).json({
-      //   message: "Please fill in all fields",
-      //   success: false,
-      // });
-    }
-    let user = await UserModel.findOne({ email });
-    if (!user) {
-      return sendResponse(res, 401, "Incorrect email or password", false);
-      // return res.status(401).json({
-      //   message: "Incorrect email or password",
-      //   success: false,
-      // });
-    }
-    const isPasswordMatch = await bcrypt.compare(password, user.password);
-    if (!isPasswordMatch) {
-      return res.status(401).json({
-        message: "Incorrect password",
-        success: false,
-      });
+    
+    if (!email || !password) {
+      return sendResponse(res, 400, false, "Please provide email and password");
     }
 
-    const populatedPost = await Promise.all(
-      user.posts.map(async (postId) => {
-        const post = await PostModel.findById(postId);
-        if (post.author.equals(user._id)) {
-          return post;
-        } else {
-          return null;
-        }
-      })
-    );
-    let users = {
-      id: user._id,
-      username: user.username,
-      email: user.email,
-      profile: user.profilePicture,
-      followers: user.followers,
-      following: user.following,
-      post: populatedPost,
-    };
-    const token = jwt.sign({ userId: users.id }, process.env.SECRET_KEY, {
-      expiresIn: "1d",
-    });
-    if (token) {
-      return res
-        .cookie("token", token, {
-          httpOnly: true,
-          sameSite: "strict",
-          maxAge: 24 * 60 * 60 * 1000 * 1, //1 Day
-        })
-        .json({
-          message: `${user.username} Logged in successfully`,
-          success: true,
-          user: users,
-        });
+    const user = await UserModel.findOne({ email });
+    if (!user) {
+      return sendResponse(res, 401, false, "Invalid credentials");
     }
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return sendResponse(res, 401, false, "Invalid credentials");
+    }
+
+    // Create JWT token
+    const token = jwt.sign({ userId: user._id }, process.env.SECRET_KEY, {
+      expiresIn: '24h'
+    });
+
+    // Set cookie
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    });
+
+    // Return user data without sensitive information
+    const userData = {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      permissions: user.permissions,
+      societyId: user.societyId,
+      status: user.status
+    };
+
+    return sendResponse(res, 200, true, "Login successful", userData);
+    // const isPasswordMatch = await bcrypt.compare(password, user.password);
+    // if (!isPasswordMatch) {
+    //   return res.status(401).json({
+    //     message: "Incorrect password",
+    //     success: false,
+    //   });
+    // }
+
+    // const populatedPost = await Promise.all(
+    //   user.posts.map(async (postId) => {
+    //     const post = await PostModel.findById(postId);
+    //     if (post.author.equals(user._id)) {
+    //       return post;
+    //     } else {
+    //       return null;
+    //     }
+    //   })
+    // );
+    // let users = {
+    //   id: user._id,
+    //   username: user.username,
+    //   email: user.email,
+    //   profile: user.profilePicture,
+    //   followers: user.followers,
+    //   following: user.following,
+    //   post: populatedPost,
+    // };
+    // const token = jwt.sign({ userId: users.id }, process.env.SECRET_KEY, {
+    //   expiresIn: "1d",
+    // });
+    // if (token) {
+    //   return res
+    //     .cookie("token", token, {
+    //       httpOnly: true,
+    //       sameSite: "strict",
+    //       maxAge: 24 * 60 * 60 * 1000 * 1, //1 Day
+    //     })
+    //     .json({
+    //       message: `${user.username} Logged in successfully`,
+    //       success: true,
+    //       user: users,
+    //     });
+    // }
   } catch (error) {
     console.error(error);
   }
@@ -108,12 +173,17 @@ export const Login = async (req, res) => {
 
 export const Logout = async (req, res) => {
   try {
-    return res.cookie("token", "", { maxAge: 0 }).json({
-      message: "Logged out successfully",
-      success: true,
+    res.cookie('token', '', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 0
     });
+
+    return sendResponse(res, 200, true, "Logged out successfully");
   } catch (error) {
-    console.log(error);
+    console.error("Error in Logout:", error);
+    return sendResponse(res, 500, false, "Internal server error");
   }
 };
 

@@ -18,7 +18,7 @@ const { Title, Text } = Typography;
 
 const Dashboard: React.FC = () => {
   const { user } = useAppSelector((state) => state.auth);
-
+  
   const stats = [
     {
       title: 'Total Residents',

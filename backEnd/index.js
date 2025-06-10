@@ -6,6 +6,7 @@ import connectDb from "./Utils/DB.js"
 import userRoutes from "./Routes/User.route.js"
 import postRoutes from "./Routes/Post.route.js"
 import messageRoutes from "./Routes/Message.route.js"
+import societyRoutes from "./Routes/Society.route.js"
 import { app,server,io } from "./Socket/socket.js";
 
 dotenv.config({});
@@ -23,7 +24,7 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(urlencoded({extended:true}));
 const corseOption ={
-    origin:"http://localhost:5173",
+    origin:true,
     credentials:true
 }
 app.use(cors(corseOption))
@@ -31,8 +32,9 @@ app.use(cors(corseOption))
 
 // Routes
 app.use("/api/v1/user",userRoutes)
-app.use("/api/v1/post",postRoutes)
-app.use("/api/v1/message",messageRoutes)
+// app.use("/api/v1/post",postRoutes)
+// app.use("/api/v1/message",messageRoutes)
+app.use("/api/v1/society",societyRoutes)
 
 server.listen(PORT,()=>{   
     connectDb()

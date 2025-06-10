@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Card, Table, Button, Modal, Form, Input, Select, Space, Typography, Tag, Avatar } from 'antd';
+import { Card, Table, Button, Modal, Form, Input, Select, Space, Typography, Tag, Avatar, message } from 'antd';
 import { PlusOutlined, EditOutlined, UserOutlined } from '@ant-design/icons';
 import { useAppSelector } from '../store/hooks';
 import { User, CreateUserRequest } from '../types/user';
@@ -7,6 +7,7 @@ import { Society } from '../types/society';
 import { Permission, Role } from '../types/permissions';
 import { ALL_PERMISSIONS, PERMISSION_LABELS, DEFAULT_ROLE_PERMISSIONS } from '../config/permissions';
 import ProtectedRoute from './ProtectedRoute';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -24,71 +25,73 @@ const UserManagement: React.FC = () => {
     return user.permissions.includes(permission as any);
   };
 
-  const [users, setUsers] = useState<User[]>([
-    {
-      id: '1',
-      name: 'Super Admin',
-      email: 'super@admin.com',
-      role: 'super_admin',
-      permissions: DEFAULT_ROLE_PERMISSIONS.super_admin,
-      createdAt: '2024-01-01',
-      updatedAt: '2024-01-01',
-      status: 'active'
-    },
-    {
-      id: '2',
-      name: 'John Smith',
-      email: 'john@greenvalley.com',
-      role: 'admin',
-      permissions: DEFAULT_ROLE_PERMISSIONS.admin,
-      societyId: '1',
-      societyName: 'Green Valley Apartments',
-      createdAt: '2024-01-15',
-      updatedAt: '2024-01-15',
-      status: 'active',
-      phone: '+91 9876543210'
-    }
-  ]);
+  const queryClient = useQueryClient();
 
-  const [societies] = useState<Society[]>([
-    {
-      id: '1',
-      name: 'Green Valley Apartments',
-      description: 'Modern residential complex',
-      address: '123 Green Valley Road',
-      city: 'Mumbai',
-      state: 'Maharashtra',
-      zipCode: '400001',
-      contactEmail: 'admin@greenvalley.com',
-      contactPhone: '+91 9876543210',
-      totalUnits: 120,
-      occupiedUnits: 95,
-      adminId: '2',
-      adminName: 'John Smith',
-      adminEmail: 'john@greenvalley.com',
-      createdAt: '2024-01-15',
-      updatedAt: '2024-01-15',
-      status: 'active'
+  const { data: users = [], isLoading } = useQuery<User[]>({
+    queryKey: ['users'],
+    queryFn: async () => {
+      const response = await fetch('http://localhost:8000/api/users');
+      if (!response.ok) {
+        throw new Error('Failed to fetch users');
+      }
+      return response.json();
     }
-  ]);
+  });
+
+  const createUserMutation = useMutation({
+    mutationFn: async (values: CreateUserRequest) => {
+      const response = await fetch('http://localhost:8000/api/users/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: values.name,
+          email: values.email,
+          password: values.password,
+          phone: values.phone,
+          role: values.role,
+          permissions: values.permissions,
+          societyId: values.societyId
+        })
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to create user');
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      setIsCreateModalVisible(false);
+      form.resetFields();
+      message.success('User created successfully');
+    },
+    onError: (error: Error) => {
+      message.error('Failed to create user: ' + error.message);
+    }
+  });
+
+
+
+  const { data: societies = [] } = useQuery<Society[]>({
+    queryKey: ['societies'],
+    queryFn: async () => {
+      const response = await fetch('http://localhost:8000/api/societies');
+      if (!response.ok) {
+        throw new Error('Failed to fetch societies');
+      }
+      return response.json();
+    }
+  });
 
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
   const [form] = Form.useForm();
 
   const handleCreateUser = (values: CreateUserRequest) => {
-    const selectedSociety = societies.find(s => s.id === values.societyId);
-    const newUser: User = {
-      id: Date.now().toString(),
-      ...values,
-      societyName: selectedSociety?.name,
-      createdAt: new Date().toISOString().split('T')[0],
-      updatedAt: new Date().toISOString().split('T')[0],
-      status: 'active'
-    };
-    
-    setUsers(prev => [...prev, newUser]);
-    setIsCreateModalVisible(false);
-    form.resetFields();
+    createUserMutation.mutate(values);
   };
 
   const handleRoleChange = (role: Role) => {
@@ -188,6 +191,7 @@ const UserManagement: React.FC = () => {
               showSizeChanger: true,
             }}
             className="shadow-sm"
+            loading={isLoading}
           />
         </Card>
 
