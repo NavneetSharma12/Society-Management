@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useEffect } from 'react';
 import AdminLayout from '../components/AdminLayout';
 import Dashboard from '../components/Dashboard';
 import SuperAdminDashboard from '../components/SuperAdminDashboard';
@@ -17,18 +17,22 @@ import LoginForm from '../components/LoginForm';
 import ProtectedRoute from '../components/ProtectedRoute';
 import { useAppSelector } from '../store/hooks';
 import { Card, Typography } from 'antd';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import SocietyManagement from '@/components/society/SocietyManagement';
 
 const { Title, Text } = Typography;
 
 const AdminPanel: React.FC = () => {
-  const [currentPage, setCurrentPage] = useState('dashboard');
+  const location = useLocation();
+  const currentPage = location.pathname.split('/admin/')[1] || 'dashboard';
   const { user } = useAppSelector((state) => state.auth);
   const navigate = useNavigate();
-  console.log("user",user)
-  if (!user) {
-    navigate("/login");
-  }
+
+  useEffect(() => {
+    if (!user) {
+      navigate("/login");
+    }
+  }, [user, navigate]);
 
   const renderContent = () => {
     switch (currentPage) {
@@ -36,6 +40,12 @@ const AdminPanel: React.FC = () => {
         return user?.role === 'super_admin' ? <SuperAdminDashboard /> : (
           <ProtectedRoute permission="dashboard.view">
             <Dashboard />
+          </ProtectedRoute>
+        );
+        case 'society-management':
+        return user?.role === 'super_admin' ? <SocietyManagement /> : (
+          <ProtectedRoute permission="society.view">
+            <SocietyManagement/>
           </ProtectedRoute>
         );
       case 'resident-list':
@@ -140,7 +150,7 @@ const AdminPanel: React.FC = () => {
   };
 
   return (
-    <AdminLayout currentPage={currentPage} onMenuSelect={setCurrentPage}>
+    <AdminLayout>
       {renderContent()}
     </AdminLayout>
   );

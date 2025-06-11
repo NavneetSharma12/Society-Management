@@ -68,6 +68,8 @@ export const PERMISSION_LABELS: Record<Permission, string> = {
   'society.create': 'Create Society',
   'society.edit': 'Edit Society',
   'society.delete': 'Delete Society',
+  'society.assign_admin': 'Assign Admin',
+  "society.edit_admin": "Edit Admin",
   'society.view_all': 'View All Societies',
   'staff.view': 'View Staff',
   'staff.create': 'Create Staff',

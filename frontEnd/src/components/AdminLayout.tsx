@@ -20,18 +20,16 @@ import {
 } from '@ant-design/icons';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { logout } from '../store/slices/authSlice';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 const { Sider, Header, Content } = Layout;
 const { Title } = Typography;
 
 interface AdminLayoutProps {
   children: React.ReactNode;
-  currentPage: string;
-  onMenuSelect: (key: string) => void;
 }
 
-const AdminLayout: React.FC<AdminLayoutProps> = ({ children, currentPage, onMenuSelect }) => {
+const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const [collapsed, setCollapsed] = useState(false);
   const dispatch = useAppDispatch();
   const { user } = useAppSelector((state) => state.auth);
@@ -39,9 +37,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, currentPage, onMenu
   const handleLogout = async () => {
     const success = await dispatch(logout());
     if (success) {
-      // Redirect to login page after successful logout
       navigate('/login');
-      // window.location.href = '/login';
     }
   };
   // const handleLogout = async () => {
@@ -71,12 +67,25 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, currentPage, onMenu
     return user.permissions.includes(permission as any);
   };
 
+  const location = useLocation();
+  const currentPage = location.pathname.split('/admin/')[1] || 'dashboard';
+
+  const handleMenuSelect = ({ key }: { key: string }) => {
+    navigate(`/admin/${key}`);
+  };
+
   const menuItems = [
     {
       key: 'dashboard',
       icon: <DashboardOutlined />,
       label: 'Dashboard',
       hidden: !hasPermission('dashboard.view')
+    },
+    {
+      key: 'society-management',
+      icon: < TeamOutlined/>,
+      label: 'Society Management',
+      hidden: !hasPermission('society.view')
     },
     {
       key: 'residents',
@@ -211,7 +220,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, currentPage, onMenu
           selectedKeys={[currentPage]}
           mode="inline"
           items={menuItems}
-          onClick={({ key }) => onMenuSelect(key)}
+          onClick={handleMenuSelect}
           className="bg-slate-900 border-r-0"
         />
       </Sider>

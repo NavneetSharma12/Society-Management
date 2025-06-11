@@ -11,7 +11,6 @@ import {
   EyeOutlined
 } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
-import CreateSocietyModal from './CreateSocietyModal';
 import { Society } from '../types/society';
 import ProtectedRoute from './ProtectedRoute';
 import { fetchSocieties, createSociety } from '../store/slices/societySlice';
@@ -137,13 +136,6 @@ const SuperAdminDashboard: React.FC = () => {
             <Title level={2} className="!mb-1">Super Admin Dashboard</Title>
             <Text className="text-gray-600">Manage all societies and administrative functions</Text>
           </div>
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={() => setIsCreateModalOpen(true)}
-          >
-            Create Society
-          </Button>
         </div>
 
         <Row gutter={[16, 16]}>
@@ -204,20 +196,6 @@ const SuperAdminDashboard: React.FC = () => {
           />
         </Card>
       </div>
-      <CreateSocietyModal
-        open={isCreateModalOpen}
-        onClose={() => setIsCreateModalOpen(false)}
-        onSubmit={async (data) => {
-          try {
-            await dispatch(createSociety(data)).unwrap();
-            message.success('Society created successfully');
-            setIsCreateModalOpen(false);
-          } catch (error) {
-            message.error('Failed to create society');
-            console.error('Error creating society:', error);
-          }
-        }}
-      />
     </ProtectedRoute>
   );
 };

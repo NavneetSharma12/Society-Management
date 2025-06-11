@@ -60,7 +60,6 @@ const societySchema = new mongoose.Schema({
     adminId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
-        required: [true, 'Admin ID is required']
     },
     status: {
         type: String,

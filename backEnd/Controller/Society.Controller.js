@@ -1,4 +1,5 @@
 import Society from '../Models/Society.model.js';
+import User from '../Models/User.Model.js';
 import { sendResponse } from '../Utils/SendResponse.js';
 
 export const createSociety = async (req, res) => {
@@ -33,9 +34,23 @@ const getSocietyById = async (req, res) => {
 
 const updateSociety = async (req, res) => {
     try {
-        const society = await Society.findByIdAndUpdate(
+        const { adminId, ...updateData } = req.body;
+        let society;
+
+        if (adminId) {
+            // If adminId is provided, validate it exists in User model
+            const admin = await User.findById(adminId);
+            if (!admin) {
+                return sendResponse(res, 404, 'Admin user not found', false);
+            }
+            if (!admin.permissions.includes('society.admin')) {
+                return sendResponse(res, 403, 'User does not have admin permissions', false);
+            }
+        }
+
+        society = await Society.findByIdAndUpdate(
             req.params.id,
-            req.body,
+            { ...updateData, ...(adminId && { adminId }) },
             { new: true, runValidators: true }
         ).populate('adminId', 'name email');
 
@@ -61,9 +76,42 @@ const deleteSociety = async (req, res) => {
     }
 };
 
+const assignAdmin = async (req, res) => {
+    try {
+        const { adminId } = req.body;
+        if (!adminId) {
+            return sendResponse(res, 400, 'Admin ID is required', false);
+        }
+
+        // Validate admin user exists and has proper permissions
+        const admin = await User.findById(adminId);
+        if (!admin) {
+            return sendResponse(res, 404, 'Admin user not found', false);
+        }
+        if (!admin.permissions.includes('society.admin')) {
+            return sendResponse(res, 403, 'User does not have admin permissions', false);
+        }
+
+        const society = await Society.findByIdAndUpdate(
+            req.params.id,
+            { adminId },
+            { new: true, runValidators: true }
+        ).populate('adminId', 'name email');
+
+        if (!society) {
+            return sendResponse(res, 404, 'Society not found', false);
+        }
+
+        return sendResponse(res, 200, 'Admin assigned successfully', true, society);
+    } catch (error) {
+        return sendResponse(res, 400, error.message, false);
+    }
+};
+
 export {
     getAllSocieties,
     getSocietyById,
     updateSociety,
-    deleteSociety
+    deleteSociety,
+    assignAdmin
 };

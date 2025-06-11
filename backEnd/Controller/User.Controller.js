@@ -3,9 +3,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import cloudinary from "../Utils/Cloudinary.js";
 import getDataUri from "../Utils/DataUri.js";
-import PostModel from "../Models/Post.Model.js";
 import { sendResponse } from "../Utils/SendResponse.js";
-import { GenerateOtp, ValidateOTP } from "../Services/User.Services.js";
 
 export const createUser = async (req, res) => {
   try {

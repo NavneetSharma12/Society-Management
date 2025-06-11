@@ -4,8 +4,6 @@ import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
 import connectDb from "./Utils/DB.js"
 import userRoutes from "./Routes/User.route.js"
-import postRoutes from "./Routes/Post.route.js"
-import messageRoutes from "./Routes/Message.route.js"
 import societyRoutes from "./Routes/Society.route.js"
 import { app,server,io } from "./Socket/socket.js";
 
@@ -32,9 +30,7 @@ app.use(cors(corseOption))
 
 // Routes
 app.use("/api/v1/user",userRoutes)
-// app.use("/api/v1/post",postRoutes)
-// app.use("/api/v1/message",messageRoutes)
-app.use("/api/v1/society",societyRoutes)
+app.use("/api/v1/societies",societyRoutes)
 
 server.listen(PORT,()=>{   
     connectDb()
