@@ -17,9 +17,9 @@ router.use(isAuthenticated);
 // CRUD routes
 router.post('/', createSociety);
 router.get('/', getAllSocieties);
+router.put('/assign-admin', assignAdmin);
 router.get('/:id', getSocietyById);
 router.put('/:id', updateSociety);
 router.delete('/:id', deleteSociety);
-router.put('/:id/assign-admin', assignAdmin);
 
 export default router;

@@ -36,7 +36,6 @@ export interface User {
   role: Role;
   permissions: Permission[];
   societyId?: string;
-  societyName?: string;
 }
 
 export interface RolePermissions {

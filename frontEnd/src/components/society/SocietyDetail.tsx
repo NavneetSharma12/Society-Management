@@ -1,7 +1,7 @@
 import React from 'react';
-import { Modal, Descriptions, Tag, Button } from 'antd';
+import { Modal, Descriptions, Tag, Button, Avatar } from 'antd';
 import { Society } from '../../types/society';
-import { UserOutlined, EditOutlined } from '@ant-design/icons';
+import { UserOutlined, EditOutlined, HomeOutlined } from '@ant-design/icons';
 
 interface SocietyDetailProps {
   isVisible: boolean;
@@ -22,70 +22,69 @@ const SocietyDetail: React.FC<SocietyDetailProps> = ({
 
   return (
     <Modal
-      title="Society Details"
+      title={<Button type="text" onClick={onCancel}  className="absolute right-4 top-4" />}
       open={isVisible}
       onCancel={onCancel}
       width={720}
-      footer={[
-        <Button key="close" onClick={onCancel}>
-          Close
-        </Button>
-      ]}
+      footer={null}
+      className="society-detail-modal"
     >
-      <Descriptions bordered column={2}>
-        <Descriptions.Item label="Society Name" span={2}>
-          {society.name}
-        </Descriptions.Item>
-        <Descriptions.Item label="Description" span={2}>
-          {society.description}
-        </Descriptions.Item>
-        <Descriptions.Item label="Address" span={2}>
-          {society.address}
-        </Descriptions.Item>
-        <Descriptions.Item label="City">{society.city}</Descriptions.Item>
-        <Descriptions.Item label="State">{society.state}</Descriptions.Item>
-        <Descriptions.Item label="ZIP Code">{society.zipCode}</Descriptions.Item>
-        <Descriptions.Item label="Status">
-          <Tag color={society.status === 'active' ? 'success' : 'error'}>
-            {society.status.toUpperCase()}
+      <div className="flex items-center mb-6">
+        <Avatar size={64} icon={<HomeOutlined />} className="bg-blue-500" />
+        <div className="ml-4">
+          <h2 className="text-2xl font-semibold">{society.name}</h2>
+          <Tag color={society.status === 'active' ? 'success' : 'error'} className="mt-1">
+            {society.status}
           </Tag>
-        </Descriptions.Item>
-        <Descriptions.Item label="Contact Email">{society.contactEmail}</Descriptions.Item>
-        <Descriptions.Item label="Contact Phone">{society.contactPhone}</Descriptions.Item>
-        <Descriptions.Item label="Total Units">{society.totalUnits}</Descriptions.Item>
-        <Descriptions.Item label="Occupied Units">{society.occupiedUnits}</Descriptions.Item>
-        <Descriptions.Item label="Occupancy Rate">
-          {Math.round((society.occupiedUnits / society.totalUnits) * 100)}%
-        </Descriptions.Item>
-        <Descriptions.Item label="Created At">
-          {new Date(society.createdAt).toLocaleDateString()}
-        </Descriptions.Item>
-      </Descriptions>
-
-      <div className="mt-6">
-        <Descriptions title="Admin Information" bordered>
-          <Descriptions.Item label="Admin Name" span={2}>
-            <div className="flex items-center justify-between">
-              <span className="flex items-center">
-                <UserOutlined className="mr-2" />
-                {society.adminName}
-              </span>
-              {hasPermission('society.edit_admin') && (
-                <Button
-                  type="link"
-                  icon={<EditOutlined />}
-                  onClick={onEditAdmin}
-                >
-                  Edit Admin
-                </Button>
-              )}
-            </div>
-          </Descriptions.Item>
-          <Descriptions.Item label="Admin Email" span={2}>
-            {society.adminEmail}
-          </Descriptions.Item>
-        </Descriptions>
+        </div>
       </div>
+
+      <div className="grid grid-cols-2 gap-8 mb-6">
+        <div className="border rounded-lg p-4">
+          <h3 className="text-lg font-medium mb-4">Contact Information</h3>
+          <div className="space-y-2">
+            <p><strong>Email:</strong> {society.contactEmail}</p>
+            <p><strong>Phone:</strong> {society.contactPhone}</p>
+            <p><strong>Address:</strong> {society.address}</p>
+            <p>{society.city}, {society.state} {society.zipCode}</p>
+          </div>
+        </div>
+
+        <div className="border rounded-lg p-4">
+          <h3 className="text-lg font-medium mb-4">Unit Information</h3>
+          <div className="space-y-2">
+            <p><strong>Total Units:</strong> {society.totalUnits}</p>
+            <p><strong>Occupied:</strong> {society.occupiedUnits}</p>
+            <p><strong>Occupancy Rate:</strong> {Math.round((society.occupiedUnits / society.totalUnits) * 100)}%</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="border rounded-lg p-4">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-medium">Admin Details</h3>
+          {hasPermission('society.edit_admin') && (
+            <Button
+              type="link"
+              onClick={onEditAdmin}
+              className="text-blue-500"
+            >
+              Update Admin
+            </Button>
+          )}
+        </div>
+        <div className="flex items-center">
+          <Avatar icon={<UserOutlined />} className="bg-green-500" />
+          <div className="ml-3">
+            <p className="font-medium">{society.adminName}</p>
+            <p className="text-gray-500">{society.adminEmail}</p>
+          </div>
+        </div>
+      </div>
+
+      <p className="text-gray-500 text-sm mt-4">
+        Created: {new Date(society.createdAt).toLocaleDateString()}
+      </p>
     </Modal>
   );
 };

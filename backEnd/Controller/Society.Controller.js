@@ -76,29 +76,40 @@ const deleteSociety = async (req, res) => {
     }
 };
 
+import bcrypt from 'bcrypt';
+
 const assignAdmin = async (req, res) => {
     try {
-        const { adminId } = req.body;
-        if (!adminId) {
-            return sendResponse(res, 400, 'Admin ID is required', false);
+        const adminData = req.body.adminData;
+        console.log("adminData", adminData)
+        if (!adminData) {
+            return sendResponse(res, 400, 'Admin data is required', false);
         }
 
-        // Validate admin user exists and has proper permissions
-        const admin = await User.findById(adminId);
-        if (!admin) {
-            return sendResponse(res, 404, 'Admin user not found', false);
+
+        const existingUser = await User.findOne({ email: adminData.email });
+        if (existingUser) {
+            return sendResponse(res, 400, 'Email already in use', false);
         }
-        if (!admin.permissions.includes('society.admin')) {
-            return sendResponse(res, 403, 'User does not have admin permissions', false);
-        }
+
+        const hashedPassword = await bcrypt.hash(adminData.password, 10);
+        const user = await User.create({
+            name: adminData.name,
+            email: adminData.email,
+            password: hashedPassword,
+            permissions: adminData.permissions,
+            role: adminData.role,
+            societyId:adminData.societyId
+        });
 
         const society = await Society.findByIdAndUpdate(
-            req.params.id,
-            { adminId },
+            adminData.societyId,
+            { $push: { adminId: user._id } },
             { new: true, runValidators: true }
         ).populate('adminId', 'name email');
 
         if (!society) {
+            await User.findByIdAndDelete(user._id); // Cleanup if society not found
             return sendResponse(res, 404, 'Society not found', false);
         }
 

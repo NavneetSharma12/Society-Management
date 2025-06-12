@@ -1,6 +1,6 @@
 
 export interface Society {
-  id: string;
+  _id: string;
   name: string;
   description: string;
   address: string;

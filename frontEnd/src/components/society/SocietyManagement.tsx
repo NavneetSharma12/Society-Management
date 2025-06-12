@@ -32,6 +32,7 @@ const SocietyManagement: React.FC = () => {
     try {
       setLoading(true);
       const data = await societyService.getAll();
+      console.log("data",data)
       setSocieties(data);
     } catch (error) {
       message.error('Failed to fetch societies');
@@ -70,9 +71,9 @@ const SocietyManagement: React.FC = () => {
     
     try {
       setLoading(true);
-      const updatedSociety = await societyService.update(selectedSociety.id, values);
+      const updatedSociety = await societyService.update(selectedSociety._id, values);
       setSocieties(prev => prev.map(society => 
-        society.id === selectedSociety.id ? updatedSociety : society
+        society._id === selectedSociety._id ? updatedSociety : society
       ));
       setIsEditModalVisible(false);
       setSelectedSociety(null);
@@ -89,9 +90,15 @@ const SocietyManagement: React.FC = () => {
     
     try {
       setLoading(true);
-      const updatedSociety = await societyService.assignAdmin(selectedSociety.id, values.email);
+      const updatedSociety = await societyService.assignAdmin({
+        ...values,
+        societyId: selectedSociety._id,
+        societyName: selectedSociety.name
+      });
+
+      // const updatedSociety = await societyService.assignAdmin(selectedSociety._id, values);
       setSocieties(prev => prev.map(society => 
-        society.id === selectedSociety.id ? updatedSociety : society
+        society._id === selectedSociety._id ? updatedSociety : society
       ));
       setIsCreateAdminModalVisible(false);
       setSelectedSociety(null);

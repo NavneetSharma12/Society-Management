@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Modal, Form, Input, Select, message } from 'antd';
 import { Society, CreateSocietyRequest } from '../../types/society';
 
@@ -21,7 +21,7 @@ const CreateAndEditSociety: React.FC<CreateAndEditSocietyProps> = ({
   mode
 }) => {
   const [form] = Form.useForm();
-
+  const [loading,setLoading]=useState(false);
   React.useEffect(() => {
     if (initialValues && mode === 'edit') {
       form.setFieldsValue(initialValues);
@@ -30,11 +30,15 @@ const CreateAndEditSociety: React.FC<CreateAndEditSocietyProps> = ({
 
   const handleSubmit = async () => {
     try {
+      setLoading(true);
       const values = await form.validateFields();
       onSubmit(values);
-      // form.resetFields();
+      form.resetFields();
     } catch (error) {
       message.error('Please check your input');
+    }
+    finally{
+      setLoading(false);
     }
   };
 
@@ -42,6 +46,7 @@ const CreateAndEditSociety: React.FC<CreateAndEditSocietyProps> = ({
     <Modal
       title={mode === 'create' ? 'Create New Society' : 'Edit Society'}
       open={isVisible}
+      loading={loading}
       onCancel={onCancel}
       onOk={handleSubmit}
       width={720}

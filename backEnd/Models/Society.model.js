@@ -57,10 +57,10 @@ const societySchema = new mongoose.Schema({
             message: 'Occupied units cannot exceed total units'
         }
     },
-    adminId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-    },
+    adminId: [{
+        type: String,
+        ref: 'User'
+    }],
     status: {
         type: String,
         enum: ['active', 'inactive'],
