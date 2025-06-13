@@ -48,7 +48,7 @@ const SocietyList: React.FC<SocietyListProps> = ({
           <Avatar icon={<UserAddOutlined />} className="bg-green-600" />
           <div>
             <div className="font-medium">{adminName}</div>
-            <div className="text-sm text-gray-500">{record.adminEmail}</div>
+            {/* <div className="text-sm text-gray-500">{record.adminEmail}</div> */}
           </div>
         </div>
       ),

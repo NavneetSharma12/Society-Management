@@ -13,7 +13,7 @@ export const createSociety = async (req, res) => {
 
 const getAllSocieties = async (req, res) => {
     try {
-        const societies = await Society.find().populate('adminId', 'name email');
+        const societies = await Society.find().populate('adminId', 'name email permissions');
         return sendResponse(res, 200, 'Societies fetched successfully', true, societies);
     } catch (error) {
         return sendResponse(res, 400, error.message, false);
@@ -22,7 +22,7 @@ const getAllSocieties = async (req, res) => {
 
 const getSocietyById = async (req, res) => {
     try {
-        const society = await Society.findById(req.params.id).populate('adminId', 'name email');
+        const society = await Society.findById(req.params.id).populate('adminId', 'name email permissions');
         if (!society) {
             return sendResponse(res, 404, 'Society not found', false);
         }
@@ -99,7 +99,6 @@ const assignAdmin = async (req, res) => {
             password: hashedPassword,
             permissions: adminData.permissions,
             role: adminData.role,
-            societyId:adminData.societyId
         });
 
         const society = await Society.findByIdAndUpdate(
@@ -114,6 +113,35 @@ const assignAdmin = async (req, res) => {
         }
 
         return sendResponse(res, 200, 'Admin assigned successfully', true, society);
+    } catch (error) {
+        return sendResponse(res, 400, error.message, false);
+    }
+};
+
+export const resetAdminPassword = async (req, res) => {
+    try {
+        const { societyId, adminId } = req.params;
+
+        // Find the society and check if the admin belongs to it
+        const society = await Society.findById(societyId).populate('adminId');
+        if (!society) {
+            return sendResponse(res, 404, 'Society not found', false);
+        }
+
+        // Check if the adminId exists in the society's adminId array
+        const isAdminOfSociety = society.adminId.some(admin => admin._id.toString() === adminId);
+        if (!isAdminOfSociety) {
+            return sendResponse(res, 404, 'Admin not found in this society', false);
+        }
+
+        // Generate a random password
+        const newPassword ="welcome";
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+        // Update the admin's password
+        await User.findByIdAndUpdate(adminId, { password: hashedPassword });
+
+        return sendResponse(res, 200, `Password has been reset to: ${newPassword}`, true);
     } catch (error) {
         return sendResponse(res, 400, error.message, false);
     }

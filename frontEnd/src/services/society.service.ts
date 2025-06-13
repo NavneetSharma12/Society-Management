@@ -8,11 +8,10 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 const getAuthHeader = () => {
   // const token = store.getState().auth.token;
   return {
-          headers: {
-          'Content-Type': 'application/json'
-      },
-      withCredentials: true
-  
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    withCredentials: true
   };
 };
 
@@ -44,5 +43,13 @@ export const societyService = {
   assignAdmin: async (data: Partial<User>): Promise<Society> => {
     const response = await axios.put(`${API_URL}/api/v1/societies/assign-admin`, { adminData: data }, getAuthHeader());
     return response.data.result;
+  },
+
+  resetAdminPassword: async (societyId: string, adminId: string): Promise<void> => {
+    await axios.post(
+      `${API_URL}/api/v1/societies/${societyId}/admin/${adminId}/reset-password`,
+      {},
+      getAuthHeader()
+    );
   }
 };

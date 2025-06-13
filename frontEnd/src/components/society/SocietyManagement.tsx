@@ -48,8 +48,8 @@ const SocietyManagement: React.FC = () => {
   const [selectedSociety, setSelectedSociety] = useState<Society | null>(null);
 
   const filteredSocieties = hasPermission('society.view_all') 
-    ? societies 
-    : societies.filter(society => society.adminId === user?.id);
+    && societies 
+    // : societies.filter(society => society.adminId === user?._id);
 
   const handleCreateSociety = async (values: CreateSocietyRequest) => {
     try {
@@ -85,6 +85,8 @@ const SocietyManagement: React.FC = () => {
     }
   };
 
+  const [selectedAdmin, setSelectedAdmin] = useState<{ _id: string; name: string; email: string; permissions?: string[] } | null>(null);
+
   const handleCreateAdmin = async (values: CreateUserRequest) => {
     if (!selectedSociety) return;
     
@@ -96,15 +98,34 @@ const SocietyManagement: React.FC = () => {
         societyName: selectedSociety.name
       });
 
-      // const updatedSociety = await societyService.assignAdmin(selectedSociety._id, values);
       setSocieties(prev => prev.map(society => 
         society._id === selectedSociety._id ? updatedSociety : society
       ));
       setIsCreateAdminModalVisible(false);
       setSelectedSociety(null);
-      message.success('Admin assigned successfully');
+      setSelectedAdmin(null);
+      message.success('Admin updated successfully');
     } catch (error) {
-      message.error('Failed to assign admin');
+      message.error('Failed to update admin');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEditAdmin = (adminData: { _id: string; name: string; email: string; permissions?: string[] }) => {
+    setSelectedAdmin(adminData);
+    setIsCreateAdminModalVisible(true);
+  };
+
+  const handleResetPassword = async (adminId: string) => {
+    if (!selectedSociety) return;
+    
+    try {
+      setLoading(true);
+      await societyService.resetAdminPassword(selectedSociety._id, adminId);
+      message.success('Admin password has been reset');
+    } catch (error) {
+      message.error('Failed to reset admin password');
     } finally {
       setLoading(false);
     }
@@ -139,6 +160,7 @@ const SocietyManagement: React.FC = () => {
           }}
           onCreateAdmin={(society) => {
             setSelectedSociety(society);
+            setSelectedAdmin(null);
             setIsCreateAdminModalVisible(true);
           }}
           hasPermission={hasPermission}
@@ -167,10 +189,12 @@ const SocietyManagement: React.FC = () => {
           onCancel={() => {
             setIsCreateAdminModalVisible(false);
             setSelectedSociety(null);
+            setSelectedAdmin(null);
           }}
           onSubmit={handleCreateAdmin}
           society={selectedSociety}
-          mode="create"
+          mode={selectedAdmin ? 'edit' : 'create'}
+          initialValues={selectedAdmin || undefined}
         />
 
         <SocietyDetail
@@ -180,10 +204,8 @@ const SocietyManagement: React.FC = () => {
             setSelectedSociety(null);
           }}
           society={selectedSociety}
-          onEditAdmin={() => {
-            setIsDetailModalVisible(false);
-            setIsCreateAdminModalVisible(true);
-          }}
+          onEditAdmin={handleEditAdmin}
+          onResetPassword={handleResetPassword}
           hasPermission={hasPermission}
         />
       </Card>

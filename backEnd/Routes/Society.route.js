@@ -5,7 +5,8 @@ import {
     getSocietyById,
     updateSociety,
     deleteSociety,
-    assignAdmin
+    assignAdmin,
+    resetAdminPassword
 } from '../Controller/Society.Controller.js';
 import isAuthenticated from '../Middlewares/IsAuthenticated.js';
 
@@ -18,6 +19,7 @@ router.use(isAuthenticated);
 router.post('/', createSociety);
 router.get('/', getAllSocieties);
 router.put('/assign-admin', assignAdmin);
+router.post('/:societyId/admin/:adminId/reset-password', resetAdminPassword);
 router.get('/:id', getSocietyById);
 router.put('/:id', updateSociety);
 router.delete('/:id', deleteSociety);

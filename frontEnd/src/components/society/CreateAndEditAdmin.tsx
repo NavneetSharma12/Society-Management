@@ -3,7 +3,6 @@ import { Modal, Form, Input, message, Select, Button } from 'antd';
 import { Society } from '../../types/society';
 import { CreateUserRequest } from '../../types/user';
 import { ALL_PERMISSIONS, DEFAULT_ROLE_PERMISSIONS, PERMISSION_LABELS } from '@/config/permissions';
-import { Space } from 'lucide-react';
 import { Role } from '@/types/permissions';
 
 interface CreateAndEditAdminProps {
@@ -13,8 +12,10 @@ interface CreateAndEditAdminProps {
   society: Society | null;
   mode: 'create' | 'edit';
   initialValues?: {
-    adminName?: string;
-    adminEmail?: string;
+    _id?: string;
+    name?: string;
+    email?: string;
+    permissions?: string[];
   };
 }
 
@@ -28,12 +29,18 @@ const CreateAndEditAdmin: React.FC<CreateAndEditAdminProps> = ({
 }) => {
   const [form] = Form.useForm();
   const { Option } = Select;
+
   React.useEffect(() => {
+    console.log("initial",initialValues)
     if (initialValues && mode === 'edit') {
       form.setFieldsValue({
-        name: initialValues.adminName,
-        email: initialValues.adminEmail
+        name: initialValues.name,
+        email: initialValues.email,
+        permissions: initialValues.permissions,
+        role: 'admin'
       });
+    } else {
+      form.resetFields();
     }
   }, [initialValues, form, mode]);
 
@@ -44,13 +51,18 @@ const CreateAndEditAdmin: React.FC<CreateAndEditAdminProps> = ({
         ...values,
         role: 'admin' as Role,
         societyId: society?._id || '',
-        permissions: values.permissions || DEFAULT_ROLE_PERMISSIONS['admin']
+        permissions: values.permissions || DEFAULT_ROLE_PERMISSIONS['admin'],
+        ...(mode === 'edit' && initialValues?._id && { _id: initialValues._id })
       };
       onSubmit(adminData);
+      if (mode === 'create') {
+        form.resetFields();
+      }
     } catch (error) {
       message.error('Please check your input');
     }
   };
+
   const handleRoleChange = (role: Role) => {
     const defaultPermissions = DEFAULT_ROLE_PERMISSIONS[role];
     form.setFieldsValue({ permissions: defaultPermissions });
@@ -60,9 +72,11 @@ const CreateAndEditAdmin: React.FC<CreateAndEditAdminProps> = ({
     <Modal
       title={mode === 'create' ? 'Create Society Admin' : 'Edit Admin Details'}
       open={isVisible}
-      onCancel={()=>{
+      onCancel={() => {
         onCancel();
-        form.resetFields();
+        if (mode === 'create') {
+          form.resetFields();
+        }
       }}
       onOk={handleSubmit}
       width={520}
@@ -98,37 +112,27 @@ const CreateAndEditAdmin: React.FC<CreateAndEditAdminProps> = ({
           >
             <Input placeholder="Enter email" />
           </Form.Item>
-
-          <Form.Item
-            name="password"
-            label="Password"
-            rules={[{ required: true, message: 'Please enter password!' }]}
-          >
-            <Input.Password placeholder="Enter password" />
-          </Form.Item>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
-          <Form.Item
-            name="phone"
-            label="Phone"
-          >
-            <Input placeholder="Enter phone number" />
-          </Form.Item>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
+          {mode === 'create' && (
+            <Form.Item
+              name="password"
+              label="Password"
+              rules={[{ required: true, message: 'Please enter password!' }]}
+            >
+              <Input.Password placeholder="Enter password" />
+            </Form.Item>
+          )}
           <Form.Item
             name="role"
             label="Role"
             rules={[{ required: true, message: 'Please select a role!' }]}
           >
-            <Select onChange={handleRoleChange}>
+            <Select onChange={handleRoleChange} disabled={mode === 'edit'}>
               <Option value="admin">Admin</Option>
-              {/* {isRole('super_admin') && <Option value="super_admin">Super Admin</Option>} */}
             </Select>
           </Form.Item>
-
         </div>
 
         <Form.Item
@@ -144,17 +148,6 @@ const CreateAndEditAdmin: React.FC<CreateAndEditAdminProps> = ({
             ))}
           </Select>
         </Form.Item>
-
-        {/* <Form.Item>
-          <Space>
-            <Button type="primary" htmlType="submit" className="bg-blue-600">
-              Create User
-            </Button>
-            <Button onClick={() => setIsCreateModalVisible(false)}>
-              Cancel
-            </Button>
-          </Space>
-        </Form.Item> */}
       </Form>
     </Modal>
   );

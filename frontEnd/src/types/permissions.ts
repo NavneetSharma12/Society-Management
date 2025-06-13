@@ -30,7 +30,7 @@ export type Permission =
 export type Role = 'super_admin' | 'admin';
 
 export interface User {
-  id: string;
+  _id: string;
   name: string;
   email: string;
   role: Role;

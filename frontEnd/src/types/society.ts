@@ -1,3 +1,4 @@
+import { User } from "./permissions";
 
 export interface Society {
   _id: string;
@@ -11,9 +12,7 @@ export interface Society {
   contactPhone: string;
   totalUnits: number;
   occupiedUnits: number;
-  adminId: string;
-  adminName: string;
-  adminEmail: string;
+  adminId: User[];
   createdAt: string;
   updatedAt: string;
   status: 'active' | 'inactive';

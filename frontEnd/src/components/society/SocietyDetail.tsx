@@ -1,13 +1,14 @@
 import React from 'react';
-import { Modal, Descriptions, Tag, Button, Avatar } from 'antd';
+import { Modal, Descriptions, Tag, Button, Avatar, message } from 'antd';
 import { Society } from '../../types/society';
-import { UserOutlined, EditOutlined, HomeOutlined } from '@ant-design/icons';
+import { UserOutlined, EditOutlined, HomeOutlined, KeyOutlined } from '@ant-design/icons';
 
 interface SocietyDetailProps {
   isVisible: boolean;
   onCancel: () => void;
   society: Society | null;
-  onEditAdmin: () => void;
+  onEditAdmin: (adminData: { _id: string; name: string; email: string; permissions?: string[] }) => void;
+  onResetPassword: (adminId: string) => void;
   hasPermission: (permission: string) => boolean;
 }
 
@@ -16,13 +17,14 @@ const SocietyDetail: React.FC<SocietyDetailProps> = ({
   onCancel,
   society,
   onEditAdmin,
+  onResetPassword,
   hasPermission
 }) => {
   if (!society) return null;
 
   return (
     <Modal
-      title={<Button type="text" onClick={onCancel}  className="absolute right-4 top-4" />}
+      title={<Button type="text" onClick={onCancel} className="absolute right-4 top-4" />}
       open={isVisible}
       onCancel={onCancel}
       width={720}
@@ -59,28 +61,50 @@ const SocietyDetail: React.FC<SocietyDetailProps> = ({
           </div>
         </div>
       </div>
-
-      <div className="border rounded-lg p-4">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-medium">Admin Details</h3>
-          {hasPermission('society.edit_admin') && (
-            <Button
-              type="link"
-              onClick={onEditAdmin}
-              className="text-blue-500"
-            >
-              Update Admin
-            </Button>
-          )}
+      {society.adminId.length > 0 && (
+        <div className="space-y-4">
+          {society.adminId.map((admin) => (
+            <div key={admin._id} className="border rounded-lg p-4">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-medium">Admin Details</h3>
+                <div className="space-x-2">
+                  {hasPermission('society.edit_admin') && (
+                    <>
+                      <Button
+                        type="link"
+                        onClick={() => onEditAdmin({
+                          _id: admin._id,
+                          name: admin.name,
+                          email: admin.email,
+                          permissions: admin.permissions
+                        })}
+                        className="text-blue-500"
+                      >
+                        Update Admin
+                      </Button>
+                      <Button
+                        type="link"
+                        icon={<KeyOutlined />}
+                        onClick={() => onResetPassword(admin._id)}
+                        className="text-orange-500"
+                      >
+                        Reset Password
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </div>
+              <div className="flex items-center">
+                <Avatar icon={<UserOutlined />} className="bg-green-500" />
+                <div className="ml-3">
+                  <p className="font-medium">{admin.name}</p>
+                  <p className="text-gray-500">{admin.email}</p>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
-        <div className="flex items-center">
-          <Avatar icon={<UserOutlined />} className="bg-green-500" />
-          <div className="ml-3">
-            <p className="font-medium">{society.adminName}</p>
-            <p className="text-gray-500">{society.adminEmail}</p>
-          </div>
-        </div>
-      </div>
+      )}
 
       <p className="text-gray-500 text-sm mt-4">
         Created: {new Date(society.createdAt).toLocaleDateString()}

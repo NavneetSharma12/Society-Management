@@ -88,60 +88,60 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       hidden: !hasPermission('society.view')
     },
     {
-      key: 'residents',
+      key: 'resident-list',
       icon: <TeamOutlined />,
       label: 'Resident Management',
       hidden: !hasPermission('residents.view'),
-      children: [
-        { key: 'resident-list', label: 'Resident List', hidden: !hasPermission('residents.view') },
-        { key: 'resident-details', label: 'Profile Details', hidden: !hasPermission('residents.view') },
-      ].filter(item => !item.hidden),
+      // children: [
+      //   { key: 'resident-list', label: 'Resident List', hidden: !hasPermission('residents.view') },
+      //   { key: 'resident-details', label: 'Profile Details', hidden: !hasPermission('residents.view') },
+      // ].filter(item => !item.hidden),
     },
     {
-      key: 'requests',
+      key: 'pending-requests',
       icon: <UserAddOutlined />,
       label: 'Member Requests',
       hidden: !hasPermission('requests.view'),
-      children: [
-        { key: 'pending-requests', label: 'Pending Requests', hidden: !hasPermission('requests.view') },
-        { key: 'approval-history', label: 'Approval History', hidden: !hasPermission('requests.view') },
-      ].filter(item => !item.hidden),
+      // children: [
+      //   { key: 'pending-requests', label: 'Pending Requests', hidden: !hasPermission('requests.view') },
+      //   { key: 'approval-history', label: 'Approval History', hidden: !hasPermission('requests.view') },
+      // ].filter(item => !item.hidden),
     },
     {
-      key: 'billing',
+      key: 'billing-management',
       icon: <DollarCircleOutlined />,
       label: 'Billing & Accounting',
       hidden: !hasPermission('reports.view'),
-      children: [
-        { key: 'billing-management', label: 'Billing Management', hidden: !hasPermission('reports.view') },
-      ].filter(item => !item.hidden),
+      // children: [
+      //   { key: 'billing-management', label: 'Billing Management', hidden: !hasPermission('reports.view') },
+      // ].filter(item => !item.hidden),
     },
     {
-      key: 'complaints',
+      key: 'complaint-management',
       icon: <ExclamationCircleOutlined />,
       label: 'Complaint Management',
       hidden: !hasPermission('requests.view'),
-      children: [
-        { key: 'complaint-management', label: 'View Complaints', hidden: !hasPermission('requests.view') },
-      ].filter(item => !item.hidden),
+      // children: [
+      //   { key: 'complaint-management', label: 'View Complaints', hidden: !hasPermission('requests.view') },
+      // ].filter(item => !item.hidden),
     },
     {
-      key: 'facilities',
+      key: 'facility-booking',
       icon: <CalendarOutlined />,
       label: 'Facility Booking',
       hidden: !hasPermission('requests.view'),
-      children: [
-        { key: 'facility-booking', label: 'Manage Bookings', hidden: !hasPermission('requests.view') },
-      ].filter(item => !item.hidden),
+      // children: [
+      //   { key: 'facility-booking', label: 'Manage Bookings', hidden: !hasPermission('requests.view') },
+      // ].filter(item => !item.hidden),
     },
     {
-      key: 'staff',
+      key: 'staff-management',
       icon: <ToolOutlined />,
       label: 'Staff & Vendors',
       hidden: !hasPermission('residents.view'),
-      children: [
-        { key: 'staff-management', label: 'Staff Management', hidden: !hasPermission('residents.view') },
-      ].filter(item => !item.hidden),
+      // children: [
+      //   { key: 'staff-management', label: 'Staff Management', hidden: !hasPermission('residents.view') },
+      // ].filter(item => !item.hidden),
     },
     {
       key: 'permissions',
@@ -150,9 +150,9 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       hidden: !hasPermission('permissions.view'),
       children: [
         { key: 'role-control', label: 'Role-Based Access', hidden: !hasPermission('permissions.view') },
-        { key: 'user-management', label: 'User Management', hidden: !hasPermission('permissions.edit') },
-        { key: 'permissions-list', label: 'Permissions List', hidden: !hasPermission('permissions.view') },
-        { key: 'edit-permissions', label: 'Edit Permissions', hidden: !hasPermission('permissions.edit') },
+        // { key: 'user-management', label: 'User Management', hidden: !hasPermission('permissions.edit') },
+        // { key: 'permissions-list', label: 'Permissions List', hidden: !hasPermission('permissions.view') },
+        // { key: 'edit-permissions', label: 'Edit Permissions', hidden: !hasPermission('permissions.edit') },
       ].filter(item => !item.hidden),
     },
     {
@@ -208,7 +208,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                   Admin Panel
                 </Title>
                 <p className="text-slate-400 text-sm">
-                  {user?.societyName || 'Management System'}
+                  {user?.name || 'Management System'}
                 </p>
               </div>
             )}
