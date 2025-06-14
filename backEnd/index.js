@@ -5,6 +5,7 @@ import dotenv from "dotenv";
 import connectDb from "./Utils/DB.js"
 import userRoutes from "./Routes/User.route.js"
 import societyRoutes from "./Routes/Society.route.js"
+import residentRoutes from "./Routes/Resident.route.js"
 import { app,server,io } from "./Socket/socket.js";
 
 dotenv.config({});
@@ -31,6 +32,7 @@ app.use(cors(corseOption))
 // Routes
 app.use("/api/v1/user",userRoutes)
 app.use("/api/v1/societies",societyRoutes)
+app.use("/api/v1/residents",residentRoutes)
 
 server.listen(PORT,()=>{   
     connectDb()

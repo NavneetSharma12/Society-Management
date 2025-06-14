@@ -1,3 +1,4 @@
+import { Society } from "./society";
 
 export type Permission = 
   | 'dashboard.view'
@@ -36,7 +37,7 @@ export interface User {
   email: string;
   role: Role;
   permissions: Permission[];
-  societyId?: string;
+  society?: Society;
 }
 
 export interface RolePermissions {

@@ -28,15 +28,16 @@ export interface CreateUserRequest {
 
 export interface Resident {
   id: string;
+  _id:string;
   name: string;
   email: string;
   phone: string;
   unitNumber: string;
-  societyId: string;
+  societyId: any;
   societyName: string;
-  joinDate: string;
-  status: 'active' | 'inactive' | 'pending';
-  familyMembers: number;
+  moveInDate: Date;
+  status: 'active' | 'inactive' ;
+  isOwner: boolean;
   profileImage?: string;
 }
 

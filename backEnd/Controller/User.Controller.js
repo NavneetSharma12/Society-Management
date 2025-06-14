@@ -1,4 +1,5 @@
 import UserModel from "../Models/User.Model.js";
+import Society from "../Models/Society.model.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import cloudinary from "../Utils/Cloudinary.js";
@@ -109,16 +110,22 @@ export const Login = async (req, res) => {
       maxAge: 24 * 60 * 60 * 1000 // 24 hours
     });
 
-    // Return user data without sensitive information
-    const userData = {
+    // Fetch society information if user is an admin
+    let userData = {
       id: user._id,
       name: user.name,
       email: user.email,
       role: user.role,
       permissions: user.permissions,
-      societyId: user.societyId,
       status: user.status
     };
+
+    if (user.role === 'admin') {
+      const society = await Society.findOne({ adminId: user._id }).select('-__v');
+      if (society) {
+        userData.society = society;
+      }
+    }
 
     return sendResponse(res, 200, true, "Login successful", userData);
     // const isPasswordMatch = await bcrypt.compare(password, user.password);

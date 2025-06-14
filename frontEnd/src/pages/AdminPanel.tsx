@@ -3,7 +3,7 @@ import React, { useEffect } from 'react';
 import AdminLayout from '../components/AdminLayout';
 import Dashboard from '../components/Dashboard';
 import SuperAdminDashboard from '../components/SuperAdminDashboard';
-import ResidentList from '../components/ResidentList';
+import ResidentList from '../components/Resident/ResidentList';
 import PendingRequests from '../components/PendingRequests';
 import PermissionManager from '../components/PermissionManager';
 import UserManagement from '../components/UserManagement';
