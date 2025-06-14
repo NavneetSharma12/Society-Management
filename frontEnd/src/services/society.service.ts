@@ -45,6 +45,11 @@ export const societyService = {
     return response.data.result;
   },
 
+  updateAdmin: async (data: { _id: string; name: string; email: string; permissions?: string[] }): Promise<Society> => {
+    const response = await axios.put(`${API_URL}/api/v1/societies/update-admin`, { adminData: data }, getAuthHeader());
+    return response.data.result;
+  },
+
   resetAdminPassword: async (societyId: string, adminId: string): Promise<void> => {
     await axios.post(
       `${API_URL}/api/v1/societies/${societyId}/admin/${adminId}/reset-password`,

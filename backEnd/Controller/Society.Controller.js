@@ -147,10 +147,57 @@ export const resetAdminPassword = async (req, res) => {
     }
 };
 
+const updateAdmin = async (req, res) => {
+    try {
+        const { adminData } = req.body;
+        if (!adminData || !adminData._id) {
+            return sendResponse(res, 400, 'Admin data is required', false);
+        }
+
+        // Check if email is already in use by another user
+        const existingUser = await User.findOne({ 
+            email: adminData.email,
+            _id: { $ne: adminData._id } // Exclude current admin
+        });
+        
+        if (existingUser) {
+            return sendResponse(res, 400, 'Email already in use by another user', false);
+        }
+
+        // Update user details
+        const updatedUser = await User.findByIdAndUpdate(
+            adminData._id,
+            {
+                name: adminData.name,
+                email: adminData.email,
+                permissions: adminData.permissions
+            },
+            { new: true }
+        );
+
+        if (!updatedUser) {
+            return sendResponse(res, 404, 'Admin not found', false);
+        }
+
+        // Find and return the updated society
+        const society = await Society.findOne({ adminId: adminData._id })
+            .populate('adminId', 'name email permissions');
+
+        if (!society) {
+            return sendResponse(res, 404, 'Society not found', false);
+        }
+
+        return sendResponse(res, 200, 'Admin updated successfully', true, society);
+    } catch (error) {
+        return sendResponse(res, 400, error.message, false);
+    }
+};
+
 export {
     getAllSocieties,
     getSocietyById,
     updateSociety,
     deleteSociety,
-    assignAdmin
+    assignAdmin,
+    updateAdmin
 };

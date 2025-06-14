@@ -48,9 +48,9 @@ const SocietyManagement: React.FC = () => {
   const [selectedSociety, setSelectedSociety] = useState<Society | null>(null);
 
   const filteredSocieties = hasPermission('society.view_all') 
-    && societies 
-    // : societies.filter(society => society.adminId === user?._id);
-
+    ? societies 
+    : societies.filter(society => society.adminId?.some(admin => admin._id === user?.id));
+  console.log(user,"society",societies)
   const handleCreateSociety = async (values: CreateSocietyRequest) => {
     try {
       setLoading(true);
@@ -92,11 +92,30 @@ const SocietyManagement: React.FC = () => {
     
     try {
       setLoading(true);
-      const updatedSociety = await societyService.assignAdmin({
-        ...values,
-        societyId: selectedSociety._id,
-        societyName: selectedSociety.name
-      });
+      let updatedSociety;
+
+      if (selectedAdmin?._id) {
+        // Update existing admin
+        updatedSociety = await societyService.updateAdmin({
+          _id: selectedAdmin._id,
+          name: values.name,
+          email: values.email,
+          permissions: values.permissions
+        });
+        message.success('Admin updated successfully');
+      } else {
+        // Create new admin
+        updatedSociety = await societyService.assignAdmin({
+          name: values.name,
+          email: values.email,
+          password: values.password,
+          role: values.role,
+          permissions: values.permissions,
+          societyId: selectedSociety._id,
+          societyName: selectedSociety.name
+        });
+        message.success('Admin created successfully');
+      }
 
       setSocieties(prev => prev.map(society => 
         society._id === selectedSociety._id ? updatedSociety : society
@@ -104,17 +123,34 @@ const SocietyManagement: React.FC = () => {
       setIsCreateAdminModalVisible(false);
       setSelectedSociety(null);
       setSelectedAdmin(null);
-      message.success('Admin updated successfully');
     } catch (error) {
-      message.error('Failed to update admin');
+      message.error(selectedAdmin?._id ? 'Failed to update admin' : 'Failed to create admin');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleEditAdmin = (adminData: { _id: string; name: string; email: string; permissions?: string[] }) => {
-    setSelectedAdmin(adminData);
-    setIsCreateAdminModalVisible(true);
+  const handleEditAdmin = async (adminData: { _id: string; name: string; email: string; permissions?: string[] }) => {
+    if (adminData._id) {
+      setSelectedAdmin(adminData);
+      setIsCreateAdminModalVisible(true);
+      return;
+    }
+    
+    try {
+      setLoading(true);
+      const updatedSociety = await societyService.updateAdmin(adminData);
+      setSocieties(prev => prev.map(society => 
+        society.adminId.some(admin => admin._id === adminData._id) ? updatedSociety : society
+      ));
+      setIsCreateAdminModalVisible(false);
+      setSelectedAdmin(null);
+      message.success('Admin details updated successfully');
+    } catch (error) {
+      message.error('Failed to update admin details');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleResetPassword = async (adminId: string) => {

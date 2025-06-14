@@ -31,6 +31,7 @@ export type Role = 'super_admin' | 'admin';
 
 export interface User {
   _id: string;
+  id?:string;
   name: string;
   email: string;
   role: Role;

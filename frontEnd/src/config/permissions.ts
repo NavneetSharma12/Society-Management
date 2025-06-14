@@ -22,6 +22,8 @@ export const ALL_PERMISSIONS: Permission[] = [
   'society.edit',
   'society.delete',
   'society.view_all',
+  'society.assign_admin',
+  'society.edit_admin',
   'staff.view',
   'staff.create',
   'staff.edit',
