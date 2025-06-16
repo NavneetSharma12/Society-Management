@@ -39,6 +39,10 @@ export interface Resident {
   status: 'active' | 'inactive' ;
   isOwner: boolean;
   profileImage?: string;
+  ownerName?: string;
+  ownerEmail?: string;
+  ownerPhone?: string;
+  ownerAddress?: string;
 }
 
 export interface MemberRequest {

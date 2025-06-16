@@ -41,6 +41,27 @@ const residentSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
+    ownerName: {
+        type: String,
+        trim: true,
+        required: function() { return !this.isOwner; }
+    },
+    ownerEmail: {
+        type: String,
+        trim: true,
+        lowercase: true,
+        required: function() { return !this.isOwner; }
+    },
+    ownerPhone: {
+        type: String,
+        trim: true,
+        required: function() { return !this.isOwner; }
+    },
+    ownerAddress: {
+        type: String,
+        trim: true,
+        required: function() { return !this.isOwner; }
+    },
     documents: [{
         type: String,
         trim: true

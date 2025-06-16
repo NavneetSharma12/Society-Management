@@ -352,10 +352,14 @@ const ResidentList: React.FC = () => {
                 </Card>
               </div>
 
-              <Card size="small" title="Family Information">
-                {/* <p><strong>Family Members:</strong> {selectedResident.familyMembers}</p>
-                <p><strong>Move-in Date:</strong> {selectedResident.moveInDate}</p> */}
-              </Card>
+              {!selectedResident.isOwner && (
+                <Card size="small" title="Owner Information">
+                  <p><strong>Owner Name:</strong> {selectedResident.ownerName}</p>
+                  <p><strong>Owner Email:</strong> {selectedResident.ownerEmail}</p>
+                  <p><strong>Owner Phone:</strong> {selectedResident.ownerPhone}</p>
+                  <p><strong>Owner Address:</strong> {selectedResident.ownerAddress}</p>
+                </Card>
+              )}
             </div>
           )}
         </Modal>

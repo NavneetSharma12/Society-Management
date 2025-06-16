@@ -23,10 +23,12 @@ const ResidentForm: React.FC<ResidentFormProps> = ({
 }) => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
+  const [isTenant, setIsTenant] = useState(false);
   const { user } = useAppSelector((state) => state.auth);
 
   useEffect(() => {
     if (resident && isEditing) {
+      setIsTenant(!resident.isOwner);
       form.setFieldsValue({
         name: resident.name,
         email: resident.email,
@@ -36,7 +38,11 @@ const ResidentForm: React.FC<ResidentFormProps> = ({
         isOwner: resident.isOwner,
         moveInDate: resident.moveInDate instanceof Date 
           ? resident.moveInDate.toISOString().split('T')[0]
-          : new Date(resident.moveInDate).toISOString().split('T')[0]
+          : new Date(resident.moveInDate).toISOString().split('T')[0],
+        ownerName: resident.ownerName,
+        ownerEmail: resident.ownerEmail,
+        ownerPhone: resident.ownerPhone,
+        ownerAddress: resident.ownerAddress
       });
     }
   }, [resident, isEditing, form]);
@@ -54,7 +60,13 @@ const ResidentForm: React.FC<ResidentFormProps> = ({
         societyId: user.society?._id,
         moveInDate: values.moveInDate ? new Date(values.moveInDate) : new Date(),
         isOwner: values.isOwner || false,
-        status: values.status || 'pending'
+        status: values.status || 'pending',
+        ...(isTenant && {
+          ownerName: values.ownerName,
+          ownerEmail: values.ownerEmail,
+          ownerPhone: values.ownerPhone,
+          ownerAddress: values.ownerAddress
+        })
       };
       
       const result = await onSave(residentData);
@@ -173,9 +185,12 @@ const ResidentForm: React.FC<ResidentFormProps> = ({
             <Form.Item
               name="isOwner"
               label="Ownership Status"
-              initialValue={false}
+              initialValue={true}
             >
-              <Select placeholder="Select ownership status" >
+              <Select 
+                placeholder="Select ownership status"
+                onChange={(value) => setIsTenant(!value)}
+              >
                 <Option value={true}>Owner</Option>
                 <Option value={false}>Tenant</Option>
               </Select>
@@ -196,6 +211,62 @@ const ResidentForm: React.FC<ResidentFormProps> = ({
             </Form.Item>
           </Col>
         </Row>
+
+        {isTenant && (
+          <>
+            <Title level={4} className="!mb-4 !mt-6">Owner Details</Title>
+            <Row gutter={[16, 16]}>
+              <Col xs={24} md={12}>
+                <Form.Item
+                  name="ownerName"
+                  label="Owner Name"
+                  rules={[
+                    { required: true, message: 'Please enter owner name' }
+                  ]}
+                >
+                  <Input placeholder="Enter owner name" />
+                </Form.Item>
+              </Col>
+              <Col xs={24} md={12}>
+                <Form.Item
+                  name="ownerPhone"
+                  label="Owner Phone"
+                  rules={[
+                    { required: true, message: 'Please enter owner phone' },
+                    { pattern: /^\+?[\d\s-()]+$/, message: 'Please enter a valid phone number' }
+                  ]}
+                >
+                  <Input placeholder="Enter owner phone number" />
+                </Form.Item>
+              </Col>
+            </Row>
+            <Row gutter={[16, 16]}>
+              <Col xs={24} md={12}>
+                <Form.Item
+                  name="ownerEmail"
+                  label="Owner Email"
+                  rules={[
+                    { required: true, message: 'Please enter owner email' },
+                    { type: 'email', message: 'Please enter a valid email' }
+                  ]}
+                >
+                  <Input placeholder="Enter owner email" />
+                </Form.Item>
+              </Col>
+              <Col xs={24} md={12}>
+                <Form.Item
+                  name="ownerAddress"
+                  label="Owner Address"
+                  rules={[
+                    { required: true, message: 'Please enter owner address' }
+                  ]}
+                >
+                  <Input.TextArea placeholder="Enter owner address" />
+                </Form.Item>
+              </Col>
+            </Row>
+          </>
+        )}
 
         <div className="flex justify-end space-x-3 pt-4">
           <Button 
