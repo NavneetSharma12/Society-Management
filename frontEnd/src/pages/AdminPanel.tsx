@@ -10,7 +10,6 @@ import UserManagement from '../components/UserManagement';
 import ActivityFeed from '../components/ActivityFeed';
 import ActivityFilter from '../components/ActivityFilter';
 import BillingManagement from '../components/BillingManagement';
-import ComplaintManagement from '../components/ComplaintManagement';
 import FacilityBooking from '../components/FacilityBooking';
 import StaffManagement from '../components/StaffManagement';
 import LoginForm from '../components/LoginForm';
@@ -19,6 +18,7 @@ import { useAppSelector } from '../store/hooks';
 import { Card, Typography } from 'antd';
 import { useNavigate, useLocation } from 'react-router-dom';
 import SocietyManagement from '@/components/society/SocietyManagement';
+import ComplaintManagement from '@/components/Complain/ComplaintManagement';
 
 const { Title, Text } = Typography;
 

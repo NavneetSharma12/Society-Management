@@ -1,8 +1,13 @@
-import React, { useState } from 'react';
-import { Card, Table, Button, Modal, Form, Input, Select, Space, Typography, Tag, Avatar } from 'antd';
+import React, { useState, useEffect } from 'react';
+import complaintService from '@/services/complaint.service';
+import { Card, Table, Button, Modal, Form, Input, Select, Space, Typography, Tag, Avatar, message } from 'antd';
 import { PlusOutlined, EyeOutlined, EditOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
-import { useAppSelector } from '../store/hooks';
-import ProtectedRoute from './ProtectedRoute';
+// import { useAppSelector } from '../store/hooks';
+// import ProtectedRoute from './ProtectedRoute';
+// import ComplaintUpdateModal from './ComplaintUpdateModal';
+import { useAppSelector } from '@/store/hooks';
+import ProtectedRoute from '../ProtectedRoute';
+import ComplaintUpdateModal from './ComplaintUpdateModal';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -22,12 +27,56 @@ interface Complaint {
   assignedTo?: string;
   createdAt: string;
   updatedAt: string;
+  adminNotes?: string;
 }
 
 const ComplaintManagement: React.FC = () => {
   const { user } = useAppSelector((state) => state.auth);
   
-  const [complaints, setComplaints] = useState<Complaint[]>([
+  const [complaints, setComplaints] = useState<Complaint[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const fetchComplaints = async () => {
+    try {
+      setLoading(true);
+      let societyId=null;
+      if(user.role== "admin"){
+        societyId = user?.society?._id;
+      }
+      const response = await complaintService.getAllComplaints(societyId);
+      if (response.success) {
+        console.log("response.result",response.result)
+
+        const formattedComplaints = response.result.map(complaint => ({
+          id: complaint._id,
+          title: complaint.title,
+          description: complaint.description,
+          category: complaint.category,
+          priority: complaint.priority,
+          status: complaint.status,
+          residentName: complaint.residentId?.name,
+          unitNumber: complaint.residentId?.email,
+          societyId: complaint.societyId?._id,
+          societyName: complaint.societyId?.name,
+          assignedTo: complaint.assignedTo?.name,
+          createdAt: new Date(complaint.createdAt).toISOString().split('T')[0],
+          updatedAt: new Date(complaint.updatedAt).toISOString().split('T')[0],
+          adminNotes: ''
+        }));
+        setComplaints(formattedComplaints);
+      }
+    } catch (error) {
+      console.error(error)
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchComplaints();
+  }, []);
+
+  const [dummyComplaints, setDummyComplaints] = useState<Complaint[]>([
     {
       id: '1',
       title: 'Water leakage in bathroom',
@@ -55,23 +104,38 @@ const ComplaintManagement: React.FC = () => {
       societyName: 'Green Valley Apartments',
       assignedTo: 'Maintenance Team',
       createdAt: '2024-01-14',
-      updatedAt: '2024-01-15'
+      updatedAt: '2024-01-15',
+      adminNotes: 'Technician scheduled for tomorrow morning'
     }
   ]);
 
   const [selectedComplaint, setSelectedComplaint] = useState<Complaint | null>(null);
   const [isDetailModalVisible, setIsDetailModalVisible] = useState(false);
+  const [isUpdateModalVisible, setIsUpdateModalVisible] = useState(false);
 
   const filteredComplaints = complaints.filter(complaint => {
     if (user?.role === 'super_admin') {
       return true;
     }
-    return complaint.societyId === user?.societyId;
+    return complaint.societyId === user?.society._id;
   });
 
   const handleViewDetails = (complaint: Complaint) => {
     setSelectedComplaint(complaint);
     setIsDetailModalVisible(true);
+  };
+
+  const handleUpdateComplaint = (complaint: Complaint) => {
+    setSelectedComplaint(complaint);
+    setIsUpdateModalVisible(true);
+  };
+
+  const handleComplaintUpdate = (updatedComplaint: Complaint) => {
+    setComplaints(prev => 
+      prev.map(complaint => 
+        complaint.id === updatedComplaint.id ? updatedComplaint : complaint
+      )
+    );
   };
 
   const getPriorityColor = (priority: string) => {
@@ -162,9 +226,15 @@ const ComplaintManagement: React.FC = () => {
           >
             View
           </Button>
-          <Button icon={<EditOutlined />} size="small">
-            Update
-          </Button>
+          <ProtectedRoute permission="requests.approve">
+            <Button 
+              icon={<EditOutlined />} 
+              size="small"
+              onClick={() => handleUpdateComplaint(record)}
+            >
+              Update
+            </Button>
+          </ProtectedRoute>
         </Space>
       ),
     },
@@ -178,7 +248,7 @@ const ComplaintManagement: React.FC = () => {
             <div>
               <Title level={3} className="!mb-1">
                 Complaint Management
-                {user?.societyName && ` - ${user.societyName}`}
+                {user?.society?.name && ` - ${user?.society?.name}`}
               </Title>
               <Text className="text-gray-600">
                 Track and resolve resident complaints
@@ -236,9 +306,22 @@ const ComplaintManagement: React.FC = () => {
               <Card size="small" title="Description">
                 <p>{selectedComplaint.description}</p>
               </Card>
+
+              {selectedComplaint.adminNotes && (
+                <Card size="small" title="Admin Notes">
+                  <p>{selectedComplaint.adminNotes}</p>
+                </Card>
+              )}
             </div>
           )}
         </Modal>
+
+        <ComplaintUpdateModal
+          visible={isUpdateModalVisible}
+          complaint={selectedComplaint}
+          onCancel={() => setIsUpdateModalVisible(false)}
+          onUpdate={handleComplaintUpdate}
+        />
       </div>
     </ProtectedRoute>
   );
