@@ -45,21 +45,12 @@ export const updateBookingStatus = async (req, res) => {
     try {
         const { bookingId } = req.params;
         const { status } = req.body;
-        
-        // Only admin and super_admin can update status
-        if (!['admin', 'super_admin'].includes(req.user.role)) {
-            return sendResponse(res, 403, false, 'Unauthorized to perform this action');
-        }
-        
         const booking = await FacilityBooking.findById(bookingId);
         if (!booking) {
             return sendResponse(res, 404, false, 'Booking not found');
         }
+        console.log(booking)
         
-        // Admin can only update bookings from their society
-        if (req.user.role === 'admin' && booking.societyId.toString() !== req.user.societyId.toString()) {
-            return sendResponse(res, 403, false, 'Unauthorized to update this booking');
-        }
         
         booking.status = status;
         await booking.save();

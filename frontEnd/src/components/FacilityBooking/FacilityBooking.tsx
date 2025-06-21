@@ -5,29 +5,20 @@ import { EyeOutlined, CheckOutlined, CloseOutlined, PlusOutlined } from '@ant-de
 import { useAppSelector } from '../../store/hooks';
 import ProtectedRoute from '../ProtectedRoute';
 import FacilityBookingService from '../../services/facilityBooking.service';
+import ViewBookingModal from './ViewBookingModal';
 
 const { Title, Text } = Typography;
 
-interface Booking {
-  id: string;
-  facilityName: string;
-  residentName: string;
-  unitNumber: string;
-  bookingDate: string;
-  timeSlot: string;
-  purpose: string;
-  status: 'pending' | 'approved' | 'rejected';
-  societyId: string;
-  societyName: string;
-  createdAt: string;
-}
+import { FacilityBookingViewModel, BookingStatus } from '../../types/facilityBooking';
 
 const FacilityBooking: React.FC = () => {
   const { user } = useAppSelector((state) => state.auth);
   
-  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [bookings, setBookings] = useState<FacilityBookingViewModel[]>([]);
   const [loading, setLoading] = useState(false);
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
+  const [isViewModalVisible, setIsViewModalVisible] = useState(false);
+  const [selectedBooking, setSelectedBooking] = useState<FacilityBookingViewModel | null>(null);
 
   const fetchBookings = async () => {
     try {
@@ -74,12 +65,12 @@ const FacilityBooking: React.FC = () => {
     if (user?.role === 'super_admin') {
       return true;
     }
-    return booking.societyId === user?.society?._id;
+    return booking.societyId._id === user?.society?._id;
   });
 
 
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: BookingStatus) => {
     switch (status) {
       case 'pending': return 'orange';
       case 'approved': return 'green';
@@ -97,7 +88,7 @@ const FacilityBooking: React.FC = () => {
     {
       title: 'Resident',
       key: 'resident',
-      render: (_, record: Booking) => (
+      render: (_, record: FacilityBookingViewModel) => (
         <div>
           <div className="font-medium">{record.residentName}</div>
           <div className="text-sm text-gray-500">Unit: {record.unitNumber}</div>
@@ -107,7 +98,7 @@ const FacilityBooking: React.FC = () => {
     {
       title: 'Date & Time',
       key: 'datetime',
-      render: (_, record: Booking) => (
+      render: (_, record: FacilityBookingViewModel) => (
         <div>
           <div className="font-medium">{record.bookingDate}</div>
           <div className="text-sm text-gray-500">{record.timeSlot}</div>
@@ -123,7 +114,7 @@ const FacilityBooking: React.FC = () => {
       title: 'Status',
       dataIndex: 'status',
       key: 'status',
-      render: (status: string) => (
+      render: (status: BookingStatus) => (
         <Tag color={getStatusColor(status)}>
           {status.toUpperCase()}
         </Tag>
@@ -138,9 +129,18 @@ const FacilityBooking: React.FC = () => {
     {
       title: 'Actions',
       key: 'actions',
-      render: (_, record: Booking) => (
+      render: (_, record: FacilityBookingViewModel) => (
         <Space>
-          <Button icon={<EyeOutlined />} size="small">View</Button>
+          <Button 
+            icon={<EyeOutlined />} 
+            size="small"
+            onClick={() => {
+              setSelectedBooking(record);
+              setIsViewModalVisible(true);
+            }}
+          >
+            View
+          </Button>
           {record.status === 'pending' && (
             <>
               <Button 
@@ -148,7 +148,7 @@ const FacilityBooking: React.FC = () => {
                 size="small" 
                 type="primary"
                 className="bg-green-600"
-                onClick={() => handleApprove(record.id)}
+                onClick={() => handleApprove(record._id)}
               >
                 Approve
               </Button>
@@ -181,17 +181,16 @@ const FacilityBooking: React.FC = () => {
                 Manage facility bookings and availability
               </Text>
             </div>
-            {user?.role === 'admin' && (
-              <Button
-                type="primary"
-                icon={<PlusOutlined />}
-                onClick={() => setIsCreateModalVisible(true)}
-              >
-                Book Facility
-              </Button>
-            )}
             </div>
 
+          <ViewBookingModal
+            booking={selectedBooking}
+            visible={isViewModalVisible}
+            onClose={() => {
+              setIsViewModalVisible(false);
+              setSelectedBooking(null);
+            }}
+          />
           <Table
             columns={columns}
             dataSource={filteredBookings}
