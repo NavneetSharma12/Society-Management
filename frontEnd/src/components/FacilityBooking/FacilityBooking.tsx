@@ -1,9 +1,10 @@
 
-import React, { useState } from 'react';
-import { Card, Table, Button, Space, Typography, Tag } from 'antd';
-import { EyeOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons';
-import { useAppSelector } from '../store/hooks';
-import ProtectedRoute from './ProtectedRoute';
+import React, { useState, useEffect } from 'react';
+import { Card, Table, Button, Space, Typography, Tag, message } from 'antd';
+import { EyeOutlined, CheckOutlined, CloseOutlined, PlusOutlined } from '@ant-design/icons';
+import { useAppSelector } from '../../store/hooks';
+import ProtectedRoute from '../ProtectedRoute';
+import FacilityBookingService from '../../services/facilityBooking.service';
 
 const { Title, Text } = Typography;
 
@@ -24,61 +25,59 @@ interface Booking {
 const FacilityBooking: React.FC = () => {
   const { user } = useAppSelector((state) => state.auth);
   
-  const [bookings, setBookings] = useState<Booking[]>([
-    {
-      id: '1',
-      facilityName: 'Community Hall',
-      residentName: 'Alice Johnson',
-      unitNumber: 'A-101',
-      bookingDate: '2024-02-20',
-      timeSlot: '18:00 - 22:00',
-      purpose: 'Birthday Party',
-      status: 'pending',
-      societyId: '1',
-      societyName: 'Green Valley Apartments',
-      createdAt: '2024-01-15'
-    },
-    {
-      id: '2',
-      facilityName: 'Gym',
-      residentName: 'Bob Smith',
-      unitNumber: 'B-205',
-      bookingDate: '2024-02-18',
-      timeSlot: '06:00 - 08:00',
-      purpose: 'Personal Training',
-      status: 'approved',
-      societyId: '1',
-      societyName: 'Green Valley Apartments',
-      createdAt: '2024-01-14'
-    }
-  ]);
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
 
-  const filteredBookings = bookings.filter(booking => {
+  const fetchBookings = async () => {
+    try {
+      setLoading(true);
+      let societyId=null
+      if (user.role=="admin") {
+        societyId=user.society._id;
+      }
+      const response = await FacilityBookingService.getBookings(societyId);
+      setBookings(response?.result);
+    } catch (error: any) {
+      message.error(error.response?.data?.message || 'Failed to fetch bookings');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchBookings();
+  }, []);
+
+  const handleApprove = async (bookingId: string) => {
+    try {
+      await FacilityBookingService.updateBookingStatus(bookingId, { status: 'approved' });
+      message.success('Booking approved successfully');
+      fetchBookings();
+    } catch (error: any) {
+      message.error(error.response?.data?.message || 'Failed to approve booking');
+    }
+  };
+
+  const handleReject = async (bookingId: string) => {
+    try {
+      await FacilityBookingService.updateBookingStatus(bookingId, { status: 'rejected' });
+      message.success('Booking rejected successfully');
+      fetchBookings();
+    } catch (error: any) {
+      console.error(error.response?.data?.message || 'Failed to reject booking');
+    }
+  };
+
+
+  const filteredBookings = bookings?.filter(booking => {
     if (user?.role === 'super_admin') {
       return true;
     }
-    return booking.societyId === user?.societyId;
+    return booking.societyId === user?.society?._id;
   });
 
-  const handleApprove = (bookingId: string) => {
-    setBookings(prev => 
-      prev.map(booking => 
-        booking.id === bookingId 
-          ? { ...booking, status: 'approved' as const }
-          : booking
-      )
-    );
-  };
 
-  const handleReject = (bookingId: string) => {
-    setBookings(prev => 
-      prev.map(booking => 
-        booking.id === bookingId 
-          ? { ...booking, status: 'rejected' as const }
-          : booking
-      )
-    );
-  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -176,24 +175,40 @@ const FacilityBooking: React.FC = () => {
             <div>
               <Title level={3} className="!mb-1">
                 Facility Booking Management
-                {user?.societyName && ` - ${user.societyName}`}
+                {user?.society?.name && ` - ${user.society?.name}`}
               </Title>
               <Text className="text-gray-600">
                 Manage facility bookings and availability
               </Text>
             </div>
-          </div>
+            {user?.role === 'admin' && (
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+                onClick={() => setIsCreateModalVisible(true)}
+              >
+                Book Facility
+              </Button>
+            )}
+            </div>
 
           <Table
             columns={columns}
             dataSource={filteredBookings}
             rowKey="id"
+            loading={loading}
             pagination={{
               pageSize: 10,
               showSizeChanger: true,
             }}
             className="shadow-sm"
           />
+
+          {/* <CreateBookingModal
+            isVisible={isCreateModalVisible}
+            onClose={() => setIsCreateModalVisible(false)}
+            onSuccess={fetchBookings}
+          /> */}
         </Card>
       </div>
     </ProtectedRoute>

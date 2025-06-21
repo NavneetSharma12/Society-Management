@@ -99,12 +99,12 @@ export const Login = async (req, res) => {
 
     // Create access token
     const token = jwt.sign({ userId: user._id }, process.env.SECRET_KEY, {
-      expiresIn: '1h' // Short lived access token
+      expiresIn: '1y' // 1 year access token
     });
 
     // Create refresh token
     const refreshToken = jwt.sign({ userId: user._id }, process.env.REFRESH_SECRET_KEY, {
-      expiresIn: '7d' // Longer lived refresh token
+      expiresIn: '1y' // 1 year refresh token
     });
 
     // Set cookies
@@ -112,14 +112,14 @@ export const Login = async (req, res) => {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: 60 * 60 * 1000 // 1 hour
+      maxAge: 365 * 24 * 60 * 60 * 1000 // 1 year
     });
 
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+      maxAge: 365 * 24 * 60 * 60 * 1000 // 1 year
     });
 
     // Fetch society information if user is an admin
@@ -228,7 +228,7 @@ export const refreshAccessToken = async (req, res) => {
 
     // Generate new access token
     const newAccessToken = jwt.sign({ userId: decoded.userId }, process.env.SECRET_KEY, {
-      expiresIn: '1h'
+      expiresIn: '1y' // 1 year access token
     });
 
     // Set new access token cookie
@@ -236,7 +236,7 @@ export const refreshAccessToken = async (req, res) => {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: 60 * 60 * 1000 // 1 hour
+      maxAge: 365 * 24 * 60 * 60 * 1000 // 1 year
     });
 
     return sendResponse(res, 200, true, "Token refreshed successfully", { token: newAccessToken });

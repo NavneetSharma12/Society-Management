@@ -10,7 +10,7 @@ import UserManagement from '../components/UserManagement';
 import ActivityFeed from '../components/ActivityFeed';
 import ActivityFilter from '../components/ActivityFilter';
 import BillingManagement from '../components/BillingManagement';
-import FacilityBooking from '../components/FacilityBooking';
+import FacilityBooking from '../components/FacilityBooking/FacilityBooking';
 import StaffManagement from '../components/StaffManagement';
 import LoginForm from '../components/LoginForm';
 import ProtectedRoute from '../components/ProtectedRoute';
