@@ -48,23 +48,14 @@ export const authService = {
         const originalRequest = error.config;
 
         // If the error is 401 and we haven't tried to refresh the token yet
-        if (error.response.status === 401 && !originalRequest._retry) {
+        if (error.response?.status === 401 && !originalRequest._retry) {
           originalRequest._retry = true;
 
           try {
-            // Try to refresh the token
-            const { token } = await authService.refreshToken();
-            
-            // Update the token in localStorage
-            localStorage.setItem('token', token);
-
-            // Update the Authorization header
-            originalRequest.headers['Authorization'] = `Bearer ${token}`;
-
-            // Retry the original request
+            // Just retry the original request - the backend middleware will handle the refresh
             return axios(originalRequest);
           } catch (refreshError) {
-            // If refresh token fails, logout the user
+            // If refresh fails, logout the user
             store.dispatch({ type: 'auth/logout' });
             return Promise.reject(refreshError);
           }
